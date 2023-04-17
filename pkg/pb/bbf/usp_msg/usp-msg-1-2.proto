@@ -58,7 +58,7 @@ syntax = "proto3";
 
 package usp_msg;
 
-option go_package =  "github.com/n4-networks/usp/pkg/pb/bbf/usp_msg";
+option go_package =  "github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg";
 
 message Msg {
   Header header = 1;         // Make required in the protocol

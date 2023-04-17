@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/n4-networks/usp/pkg/mtp"
+	"github.com/n4-networks/openusp/pkg/mtp"
 )
 
 func main() {

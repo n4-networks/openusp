@@ -3,8 +3,8 @@ package mtp
 import (
 	"log"
 
-	"github.com/n4-networks/usp/pkg/db"
-	"github.com/n4-networks/usp/pkg/pb/mtpgrpc"
+	"github.com/n4-networks/openusp/pkg/db"
+	"github.com/n4-networks/openusp/pkg/pb/mtpgrpc"
 )
 
 type Mtp struct {

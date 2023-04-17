@@ -59,7 +59,7 @@ syntax = "proto3";
 
 package usp_record;
 
-option go_package =  "github.com/n4-networks/usp/pkg/pb/bbf/usp_record";
+option go_package =  "github.com/n4-networks/openusp/pkg/pb/bbf/usp_record";
 
 message Record {
   string version = 1;

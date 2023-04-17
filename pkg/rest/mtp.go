@@ -6,7 +6,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/n4-networks/usp/pkg/pb/mtpgrpc"
+	"github.com/n4-networks/openusp/pkg/pb/mtpgrpc"
 	"google.golang.org/grpc"
 )
 

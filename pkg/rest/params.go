@@ -5,7 +5,7 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/n4-networks/usp/pkg/db"
+	"github.com/n4-networks/openusp/pkg/db"
 )
 
 type ObjParam struct {

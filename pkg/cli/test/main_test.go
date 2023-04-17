@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/n4-networks/usp/cmd/cli"
+	"github.com/n4-networks/openusp/pkg/cli"
 )
 
 var (

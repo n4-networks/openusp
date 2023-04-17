@@ -20,7 +20,7 @@ LOGGING=all
 BIN=cli
 
 BUILDFLAGS=CGO_ENABLED=0 GOOS=linux
-LDFLAGS=-ldflags "-X github.com/n4-networks/usp/cmd/cli.buildtime=`date -u +%Y-%m-%dT%H:%M:%SZ`"
+LDFLAGS=-ldflags "-X github.com/n4-networks/openusp/cmd/cli.buildtime=`date -u +%Y-%m-%dT%H:%M:%SZ`"
 RUNFLAGS=AGENT_ID=$(AGENT) REST_SRV_ADDR=$(REST) CLI_LOGGING=$(LOGGING)
 
 $(BIN): ../*.go
@@ -44,5 +44,5 @@ test:
 
 .PHONY: clean
 clean:
-	go clean -n github.com/n4-networks/usp/cmd/cli/cmd/...
+	go clean -n github.com/n4-networks/openusp/cmd/cli/cmd/...
 	rm $(BIN)

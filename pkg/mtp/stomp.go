@@ -9,7 +9,7 @@ import (
 
 	"github.com/gmallard/stompngo"
 	"github.com/gmallard/stompngo/senv"
-	"github.com/n4-networks/usp/pkg/pb/bbf/usp_msg"
+	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
 )
 
 type Stomp struct {

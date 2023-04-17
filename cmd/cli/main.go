@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/n4-networks/usp/pkg/cli"
+	"github.com/n4-networks/openusp/pkg/cli"
 )
 
 func main() {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/n4-networks/usp/pkg/db"
+	"github.com/n4-networks/openusp/pkg/db"
 )
 
 func (re *Rest) IsConnectedToDb() bool {

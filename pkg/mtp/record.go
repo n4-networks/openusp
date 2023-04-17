@@ -4,8 +4,8 @@ import (
 	"errors"
 	"log"
 
-	"github.com/n4-networks/usp/pkg/pb/bbf/usp_msg"
-	"github.com/n4-networks/usp/pkg/pb/bbf/usp_record"
+	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
+	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_record"
 	"google.golang.org/protobuf/proto"
 )
 

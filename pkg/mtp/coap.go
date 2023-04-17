@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/n4-networks/usp/pkg/pb/bbf/usp_msg"
+	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
 	piondtls "github.com/pion/dtls/v2"
 	coap "github.com/plgd-dev/go-coap/v2"
 	"github.com/plgd-dev/go-coap/v2/message"

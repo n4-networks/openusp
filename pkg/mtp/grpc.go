@@ -7,9 +7,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/n4-networks/usp/pkg/parser"
-	"github.com/n4-networks/usp/pkg/pb/bbf/usp_msg"
-	"github.com/n4-networks/usp/pkg/pb/mtpgrpc"
+	"github.com/n4-networks/openusp/pkg/parser"
+	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
+	"github.com/n4-networks/openusp/pkg/pb/mtpgrpc"
 	"google.golang.org/grpc"
 )
 
