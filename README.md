@@ -1,5 +1,5 @@
 # Summary 
-Open source implementation of USP (User Services Platform) controller based on Broadband Forum's [USP] (https://usp.technology) Specification.
+Open source implementation of USP (User Services Platform) controller based on Broadband Forum's [USP](https://usp.technology) Specification.
 
 ## Background
 So far most of the residential broadband devices e.g. Residential Gateways and Routers are being remotely managed by TR-069 based ACS (Auto configuration server) controllers or by proprietary software.
