@@ -1,0 +1,22 @@
+<h2> Instance Objects </h2>
+<table>
+  <tr>
+    <th>Endpoint</th>
+    <th>Path</th>
+    <th>Unique Keys</th>
+  </tr>
+  <tr ng-repeat="x in Instances">
+    <td>{{x.EndpointID}}</td>
+	<td>{{x.Path}}</td>
+	<td>
+	  <!--div ng-show=x.UniqueKeys.length-->
+        <table>
+			<tr ng-repeat="(key, value) in x.UniqueKeys">
+			  <td>{{key}}</td>
+			  <td>{{value}}</td>
+			</tr>
+		  </table>
+      <!--div -->
+	</td>
+  </tr>
+</table>

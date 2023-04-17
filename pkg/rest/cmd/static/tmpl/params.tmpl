@@ -1,0 +1,23 @@
+<h2> Parameter Data </h2>
+<div>
+  <form name="paramForm">
+  Name: <input ng-model="name">
+    <h1>You entered: {{name}}</h1>
+    EndpointID: <select ng-model="selectedName" ng-options="item for item in Names"></select>
+  </form>
+</div>
+</br>
+
+<table>
+  <tr>
+    <th>Endpoint</th>
+    <th>Path</th>
+    <th>Value</th>
+  </tr>
+  <tr ng-repeat="x in Params">
+    <td>{{x.EndpointID}}</td>
+	<td>{{x.Path}}</td>
+	<td>{{x.Value}}</td>
+	<td>
+  </tr>
+</table>

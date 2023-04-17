@@ -1,0 +1,26 @@
+help
+exit
+help
+exit
+help
+show
+show agent
+showcfg
+help
+reconnect db
+reconnect db help
+reconnect db
+reconnect stp
+reconnect stomp
+connect db
+exit
+show
+show agent
+show devinfo
+show device
+show help
+show stomp
+show nw wireless
+show mtp
+show logging
+exit

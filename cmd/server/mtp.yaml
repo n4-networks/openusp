@@ -1,0 +1,44 @@
+http:
+  mode: nontls # nontls/tls/both
+  port: 8000
+  tlsPort: 8001  #443
+  certFile: server.crt
+  keyFile: server.key
+
+coap:
+  server:
+    mode: nondtls # nondtls/dtls/both
+    port: 5683
+    dtlsPort: 5684
+client:
+
+stomp:
+  mode: nontls
+  serverAddr: 172.20.0.2:61613
+  serverAddrTLS: 172.17.0.3:61614
+  agentQueue: /queue/agent-1
+  controllerQueue: /queue/controller-notify-dest
+  userName:
+  password:
+  retryCount: 5
+
+mqtt:
+  mode: nontls
+  brokerAddr: 172.20.0.2:1883
+  topic: "/usp/controller"
+  userName:
+  password:
+
+db:
+  serverAddr: 172.19.0.2:27017
+  name: usp
+
+cache:
+  serverAddr: 172.17.0.6:6379
+
+usp:
+  endpointId: self::usp-controller
+  protoVersion: 1.2
+
+grpc:
+  port: 9001

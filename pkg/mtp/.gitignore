@@ -1,0 +1,4 @@
+*.log
+cmd/cmd
+server.crt
+server.key
