@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package cntrlgrpc;
+
+//import "google.protobuf.empty.proto";
+
+option go_package = "github.com/n4-networks/pb/cntlrgrpc";
+
+message CntlrSetParamReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+  string param = 4;
+  string value = 5;
+}
+message CntlrSetParamResData {
+  bool isSuccess = 1;
+  string agentId = 2;
+  string msgId = 3;
+  repeated Param paramSet = 4;
+  message Param {
+    string path = 1;
+	string value = 2;
+  }
+  string errMsg = 5;
+}
+message CntlrReqResult{
+  bool isSuccess = 1;
+  string errMsg = 2;
+}
+
+message CntlrGetParamReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+}
+
+message CntlrGetInstancesReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+  bool   firstLevelOnly = 4;
+}
+
+message CntlrAddInstanceReqData {
+  string agentId = 1;
+  string msgId = 2;
+  repeated Object objs = 3;
+  message Object {
+    string path = 1;
+    map<string, string> params = 2;
+  }
+}
+message CntlrAddInstanceResData {
+  bool isSuccess = 1;
+  string agentId = 2;
+  string msgId = 3;
+  repeated Instance inst = 4;
+  message Instance {
+    string path = 1;
+	map<string, string> uniqueKeys = 2;
+  }
+  string errMsg = 5;
+}
+
+message CntlrOperateReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string cmd = 3;
+  string cmdKey = 4;
+  bool   resp = 5;
+  map<string, string> inputs = 6;
+}
+
+message CntlrOperateResData {
+  bool isSuccess = 1;
+  string agentId = 2;
+  string msgId = 3;
+  string cmd = 4;
+  oneof resp {
+    string path = 5;
+	OutputArgs args = 6;
+	string errMsg = 7;
+  }
+  message OutputArgs {
+    map<string, string> outputs = 1;
+  }
+}
+
+message CntlrGetDatamodelReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+  bool   retCmd = 4;
+  bool   retEvents  = 5;
+  bool   retParams = 6;
+}
+
+message CntlrDeleteInstanceReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string objPath = 3;
+}
+
+message CntlrGetAgentMsgsData {
+  string agentId = 1;
+}
+
+message CntlrInfoData {
+  string version = 1;
+}
+
+message None {}
+
+service CntlrGrpc{
+  rpc CntlrGetParamReq(CntlrGetParamReqData) returns (CntlrReqResult){};
+  rpc CntlrSetParamReq(CntlrSetParamReqData) returns (CntlrSetParamResData){};
+  rpc CntlrGetInstancesReq(CntlrGetInstancesReqData) returns (CntlrReqResult){};
+  rpc CntlrAddInstanceReq(CntlrAddInstanceReqData) returns (CntlrAddInstanceResData){};
+  rpc CntlrOperateReq(CntlrOperateReqData) returns (CntlrOperateResData){};
+  rpc CntlrGetDatamodelReq(CntlrGetDatamodelReqData) returns (CntlrReqResult){};
+  rpc CntlrDeleteInstanceReq(CntlrDeleteInstanceReqData) returns (CntlrReqResult){};
+  rpc CntlrGetAgentMsgs(CntlrGetAgentMsgsData) returns (CntlrReqResult){};
+  rpc CntlrGetInfo(None) returns (CntlrInfoData){};
+
+  rpc CntlrStream(CntlrGetParamReqData) returns (stream CntlrReqResult){};
+}

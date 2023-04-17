@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package mtpgrpc;
+
+//import "google.protobuf.empty.proto";
+
+option go_package = "github.com/n4-networks/pb/mtpgrpc";
+
+message MtpSetParamReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+  string param = 4;
+  string value = 5;
+}
+message MtpSetParamResData {
+  bool isSuccess = 1;
+  string agentId = 2;
+  string msgId = 3;
+  repeated Param paramSet = 4;
+  message Param {
+    string path = 1;
+	string value = 2;
+  }
+  string errMsg = 5;
+}
+message MtpReqResult{
+  bool isSuccess = 1;
+  string errMsg = 2;
+}
+
+message MtpGetParamReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+}
+
+message MtpGetInstancesReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+  bool   firstLevelOnly = 4;
+}
+
+message MtpAddInstanceReqData {
+  string agentId = 1;
+  string msgId = 2;
+  repeated Object objs = 3;
+  message Object {
+    string path = 1;
+    map<string, string> params = 2;
+  }
+}
+message MtpAddInstanceResData {
+  bool isSuccess = 1;
+  string agentId = 2;
+  string msgId = 3;
+  repeated Instance inst = 4;
+  message Instance {
+    string path = 1;
+	map<string, string> uniqueKeys = 2;
+  }
+  string errMsg = 5;
+}
+
+message MtpOperateReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string cmd = 3;
+  string cmdKey = 4;
+  bool   resp = 5;
+  map<string, string> inputs = 6;
+}
+
+message MtpOperateResData {
+  bool isSuccess = 1;
+  string agentId = 2;
+  string msgId = 3;
+  string cmd = 4;
+  oneof resp {
+    string path = 5;
+	OutputArgs args = 6;
+	string errMsg = 7;
+  }
+  message OutputArgs {
+    map<string, string> outputs = 1;
+  }
+}
+
+message MtpGetDatamodelReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string path = 3;
+  bool   retCmd = 4;
+  bool   retEvents  = 5;
+  bool   retParams = 6;
+}
+
+message MtpDeleteInstanceReqData {
+  string agentId = 1;
+  string msgId = 2;
+  string objPath = 3;
+}
+
+message MtpGetAgentMsgsData {
+  string agentId = 1;
+}
+
+message MtpInfoData {
+  string version = 1;
+}
+
+message None {}
+
+service MtpGrpc{
+  rpc MtpGetParamReq(MtpGetParamReqData) returns (MtpReqResult){};
+  rpc MtpSetParamReq(MtpSetParamReqData) returns (MtpSetParamResData){};
+  rpc MtpGetInstancesReq(MtpGetInstancesReqData) returns (MtpReqResult){};
+  rpc MtpAddInstanceReq(MtpAddInstanceReqData) returns (MtpAddInstanceResData){};
+  rpc MtpOperateReq(MtpOperateReqData) returns (MtpOperateResData){};
+  rpc MtpGetDatamodelReq(MtpGetDatamodelReqData) returns (MtpReqResult){};
+  rpc MtpDeleteInstanceReq(MtpDeleteInstanceReqData) returns (MtpReqResult){};
+  rpc MtpGetAgentMsgs(MtpGetAgentMsgsData) returns (MtpReqResult){};
+  rpc MtpGetInfo(None) returns (MtpInfoData){};
+
+  rpc MtpStream(MtpGetParamReqData) returns (stream MtpReqResult){};
+}
