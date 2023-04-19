@@ -1,4 +1,4 @@
-package rest
+package apiserver
 
 type devInfo struct {
 	productClass string

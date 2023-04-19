@@ -1,4 +1,4 @@
-package rest
+package apiserver
 
 import (
 	"errors"
@@ -10,12 +10,12 @@ type Instance struct {
 	UniqueKeys map[string]string `json:"unique_keys"`
 }
 
-func (re *Rest) getInstanceObjs(epId string, objPath string) ([]*Instance, error) {
-	if re.db.uspIntf == nil {
+func (as *ApiServer) getInstanceObjs(epId string, objPath string) ([]*Instance, error) {
+	if as.db.uspIntf == nil {
 		return nil, errors.New("Error: DB interface has not been initilized")
 	}
 	dmPath := getDmPathFromAbsPath(objPath)
-	dm, err := re.db.uspIntf.GetDm(epId, dmPath)
+	dm, err := as.db.uspIntf.GetDm(epId, dmPath)
 	if err != nil {
 		log.Println("GetDm Err:", err)
 		return nil, err
@@ -26,7 +26,7 @@ func (re *Rest) getInstanceObjs(epId string, objPath string) ([]*Instance, error
 
 	regexPath := objPath + "[0-9]+."
 	log.Println("GetInstances regexPath:", regexPath)
-	dbInsts, err := re.db.uspIntf.GetInstancesByRegex(epId, regexPath)
+	dbInsts, err := as.db.uspIntf.GetInstancesByRegex(epId, regexPath)
 	if err != nil {
 		log.Println("GetInstances from DB failed", err)
 		return nil, err
@@ -42,13 +42,13 @@ func (re *Rest) getInstanceObjs(epId string, objPath string) ([]*Instance, error
 	return insts, nil
 }
 
-func (re *Rest) addInstanceObj(d *uspData) (*Instance, error) {
+func (as *ApiServer) addInstanceObj(d *uspData) (*Instance, error) {
 	var objs []*object
 	obj := &object{}
 	obj.path = d.path
 	obj.params = d.params
 	objs = append(objs, obj)
-	insts, err := re.MtpAddInstanceReq(d.epId, objs)
+	insts, err := as.CntlrAddInstanceReq(d.epId, objs)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +57,10 @@ func (re *Rest) addInstanceObj(d *uspData) (*Instance, error) {
 	return insts[0], nil
 }
 
-func (re *Rest) updateInstancesObjs(d *uspData) error {
-	return re.MtpGetInstancesReq(d.epId, d.path, false)
+func (as *ApiServer) updateInstancesObjs(d *uspData) error {
+	return as.CntlrGetInstancesReq(d.epId, d.path, false)
 }
 
-func (re *Rest) deleteInstancesObjs(d *uspData) error {
-	return re.MtpDeleteInstanceReq(d.epId, d.path)
+func (as *ApiServer) deleteInstancesObjs(d *uspData) error {
+	return as.CntlrDeleteInstanceReq(d.epId, d.path)
 }

@@ -1,4 +1,4 @@
-package rest
+package apiserver
 
 import (
 	"encoding/json"
@@ -15,85 +15,85 @@ type uspData struct {
 	params map[string]string
 }
 
-func (re *Rest) addInstance(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) addInstance(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		inst, err := re.addInstanceObj(d)
+		inst, err := as.addInstanceObj(d)
 		httpSendRes(w, inst, err)
 	}
 }
 
-func (re *Rest) setParams(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) setParams(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		err := re.setParamsObj(d)
+		err := as.setParamsObj(d)
 		httpSendRes(w, nil, err)
 	}
 }
 
-func (re *Rest) operateCmd(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) operateCmd(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		err := re.MtpOperateReq(d.epId, d.path, "none", true, d.params)
+		err := as.CntlrOperateReq(d.epId, d.path, "none", true, d.params)
 		httpSendRes(w, nil, err)
 	}
 }
 
-func (re *Rest) getDm(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) getDm(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		objs, err := re.getDmObjs(d)
+		objs, err := as.getDmObjs(d)
 		httpSendRes(w, objs, err)
 	}
 }
 
-func (re *Rest) updateDm(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) updateDm(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		err := re.updateDmObjs(d)
+		err := as.updateDmObjs(d)
 		httpSendRes(w, nil, err)
 	}
 }
 
-func (re *Rest) updateInstances(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) updateInstances(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		err := re.updateInstancesObjs(d)
+		err := as.updateInstancesObjs(d)
 		httpSendRes(w, nil, err)
 	}
 }
 
-func (re *Rest) deleteInstances(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) deleteInstances(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		err := re.deleteInstancesObjs(d)
+		err := as.deleteInstancesObjs(d)
 		httpSendRes(w, nil, err)
 	}
 }
 
-func (re *Rest) updateParams(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) updateParams(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		err := re.updateParamsObjs(d)
+		err := as.updateParamsObjs(d)
 		httpSendRes(w, nil, err)
 	}
 }
 
-func (re *Rest) getAgents(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) getAgents(w http.ResponseWriter, r *http.Request) {
 	log.Println("inside of getAgents api")
-	objs, err := re.getAgentIds()
+	objs, err := as.getAgentIds()
 	httpSendRes(w, objs, err)
 }
 
-func (re *Rest) deleteDbColl(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) deleteDbColl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	var ok bool
@@ -104,39 +104,39 @@ func (re *Rest) deleteDbColl(w http.ResponseWriter, r *http.Request) {
 		httpSendRes(w, nil, errors.New("Collection name not found in the request"))
 	}
 	log.Println("Collection to be deleted:", collName)
-	err := re.dbDeleteColl(collName)
+	err := as.dbDeleteColl(collName)
 	httpSendRes(w, nil, err)
 }
 
-func (re *Rest) getMtpInfo(w http.ResponseWriter, r *http.Request) {
-	obj, err := re.getMtpInfoObj()
+func (as *ApiServer) getCntlrInfo(w http.ResponseWriter, r *http.Request) {
+	obj, err := as.getCntlrInfoObj()
 	httpSendRes(w, obj, err)
 }
 
-func (re *Rest) reconnectDb(w http.ResponseWriter, r *http.Request) {
-	err := re.connectDb()
+func (as *ApiServer) reconnectDb(w http.ResponseWriter, r *http.Request) {
+	err := as.connectDb()
 	httpSendRes(w, nil, err)
 }
 
-func (re *Rest) reconnectMtp(w http.ResponseWriter, r *http.Request) {
-	err := re.connectMtp()
+func (as *ApiServer) reconnectCntlr(w http.ResponseWriter, r *http.Request) {
+	err := as.connectToController()
 	httpSendRes(w, nil, err)
 }
 
-func (re *Rest) getParams(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) getParams(w http.ResponseWriter, r *http.Request) {
 	d, err := parseUspReq(r)
 	if err != nil {
 		httpSendRes(w, nil, err)
 	}
-	objs, err := re.getMultipleObjParams(d)
+	objs, err := as.getMultipleObjParams(d)
 	httpSendRes(w, objs, err)
 }
 
-func (re *Rest) getInstances(w http.ResponseWriter, r *http.Request) {
+func (as *ApiServer) getInstances(w http.ResponseWriter, r *http.Request) {
 	if d, err := parseUspReq(r); err != nil {
 		httpSendRes(w, nil, err)
 	} else {
-		objs, err := re.getInstanceObjs(d.epId, d.path)
+		objs, err := as.getInstanceObjs(d.epId, d.path)
 		httpSendRes(w, objs, err)
 	}
 }

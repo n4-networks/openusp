@@ -1,4 +1,4 @@
-package rest
+package apiserver
 
 import (
 	"errors"
@@ -7,11 +7,11 @@ import (
 	"github.com/n4-networks/openusp/pkg/db"
 )
 
-func (re *Rest) getDmObjs(d *uspData) ([]*db.DmObject, error) {
-	if re.db.uspIntf == nil {
+func (as *ApiServer) getDmObjs(d *uspData) ([]*db.DmObject, error) {
+	if as.db.uspIntf == nil {
 		return nil, errors.New("Error: DB interface has not been initilized")
 	}
-	dmObj, err := re.db.uspIntf.GetDmByRegex(d.epId, d.path)
+	dmObj, err := as.db.uspIntf.GetDmByRegex(d.epId, d.path)
 	if err != nil {
 		log.Println("Error in getting datamodel from db, err:", err)
 		return nil, err
@@ -19,8 +19,8 @@ func (re *Rest) getDmObjs(d *uspData) ([]*db.DmObject, error) {
 	return dmObj, nil
 }
 
-func (re *Rest) updateDmObjs(d *uspData) error {
-	if err := re.MtpGetDatamodelReq(d.epId, d.path); err != nil {
+func (as *ApiServer) updateDmObjs(d *uspData) error {
+	if err := as.CntlrGetDatamodelReq(d.epId, d.path); err != nil {
 		log.Println("updateDm error:", err)
 		return err
 	}

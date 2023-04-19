@@ -1,15 +1,15 @@
-package rest
+package apiserver
 
 import (
 	"log"
 	"net/http"
 )
 
-func (re *Rest) setMiddlewares() error {
+func (as *ApiServer) setMiddlewares() error {
 	log.Println("Registering middleware logging")
-	re.router.Use(middlewareLogging)
+	as.router.Use(middlewareLogging)
 	log.Println("Registering middleware access control")
-	re.router.Use(middlewareUserAuth)
+	as.router.Use(middlewareUserAuth)
 	return nil
 }
 

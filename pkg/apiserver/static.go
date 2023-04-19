@@ -1,4 +1,4 @@
-package rest
+package apiserver
 
 import (
 	"log"
@@ -51,8 +51,8 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
 }
 
-func (re *Rest) setStaticHandler() error {
+func (as *ApiServer) setStaticHandler() error {
 	spa := spaHandler{staticPath: "static", indexPath: "index.html"}
-	re.router.PathPrefix("/").Handler(spa)
+	as.router.PathPrefix("/").Handler(spa)
 	return nil
 }

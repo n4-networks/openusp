@@ -1,5 +1,5 @@
 # Overview
-**C**ommand **L**ine **I**nterface (CLI) N4 is centralized command center to issue various commands to all the distributed subsystems. It interacts with rest of the N4 modules through gRPC protocol and uses database methods to interact with the DB. 
+**C**ommand **L**ine **I**nterface (CLI) of OpenUsp is centralized command center to issue various commands to all the distributed subsystems. It interacts with ApiServer of OpenUsp through gRPC protocol and uses database methods to interact with the DB. 
 
 It issues variour USP commands to agents through MTP module.
 

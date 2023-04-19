@@ -1,4 +1,4 @@
-package rest
+package apiserver
 
 import (
 	"log"
@@ -30,34 +30,34 @@ const (
 	GET_MTPINFO = "/get/mtpinfo/"
 )
 
-func (re *Rest) initRouter() error {
-	re.router = mux.NewRouter()
-	re.setMiddlewares()
-	//re.setStaticHandler()
-	re.setRoutesHandlers()
+func (as *ApiServer) initRouter() error {
+	as.router = mux.NewRouter()
+	as.setMiddlewares()
+	//as.setStaticHandler()
+	as.setRoutesHandlers()
 	return nil
 }
 
-func (re *Rest) setRoutesHandlers() error {
+func (as *ApiServer) setRoutesHandlers() error {
 	log.Println("Setting routing handlers")
-	re.router.HandleFunc(GET_DM+"{epId}/{path}", re.getDm).Methods("GET")
-	re.router.HandleFunc(GET_PARAMS+"{epId}/{path}", re.getParams).Methods("GET")
-	re.router.HandleFunc(GET_INSTANCES+"{epId}/{path}", re.getInstances).Methods("GET")
-	re.router.HandleFunc(UPDATE_DM+"{epId}/{path}", re.updateDm).Methods("GET")
-	re.router.HandleFunc(UPDATE_INSTANCES+"{epId}/{path}", re.updateInstances).Methods("GET")
-	re.router.HandleFunc(DELETE_INSTANCES+"{epId}/{path}", re.deleteInstances).Methods("GET")
-	re.router.HandleFunc(UPDATE_PARAMS+"{epId}/{path}", re.updateParams).Methods("GET")
-	re.router.HandleFunc(GET_AGENTS, re.getAgents).Methods("GET")
-	re.router.HandleFunc(GET_MTPINFO, re.getMtpInfo).Methods("GET")
-	re.router.HandleFunc(DELETE_DBCOLL+"{coll}", re.deleteDbColl).Methods("GET")
-	re.router.HandleFunc(RECONNECT_DB, re.reconnectDb).Methods("GET")
-	re.router.HandleFunc(RECONNECT_MTP, re.reconnectMtp).Methods("GET")
+	as.router.HandleFunc(GET_DM+"{epId}/{path}", as.getDm).Methods("GET")
+	as.router.HandleFunc(GET_PARAMS+"{epId}/{path}", as.getParams).Methods("GET")
+	as.router.HandleFunc(GET_INSTANCES+"{epId}/{path}", as.getInstances).Methods("GET")
+	as.router.HandleFunc(UPDATE_DM+"{epId}/{path}", as.updateDm).Methods("GET")
+	as.router.HandleFunc(UPDATE_INSTANCES+"{epId}/{path}", as.updateInstances).Methods("GET")
+	as.router.HandleFunc(DELETE_INSTANCES+"{epId}/{path}", as.deleteInstances).Methods("GET")
+	as.router.HandleFunc(UPDATE_PARAMS+"{epId}/{path}", as.updateParams).Methods("GET")
+	as.router.HandleFunc(GET_AGENTS, as.getAgents).Methods("GET")
+	as.router.HandleFunc(GET_MTPINFO, as.getCntlrInfo).Methods("GET")
+	as.router.HandleFunc(DELETE_DBCOLL+"{coll}", as.deleteDbColl).Methods("GET")
+	as.router.HandleFunc(RECONNECT_DB, as.reconnectDb).Methods("GET")
+	as.router.HandleFunc(RECONNECT_MTP, as.reconnectCntlr).Methods("GET")
 
-	re.router.HandleFunc(ADD_INSTANCES+"{epId}/{path}", re.addInstance).Methods("POST")
-	re.router.HandleFunc(OPERATE_CMD+"{epId}/{path}", re.operateCmd).Methods("POST")
-	re.router.HandleFunc(SET_PARAMS+"{epId}/{path}", re.setParams).Methods("POST")
+	as.router.HandleFunc(ADD_INSTANCES+"{epId}/{path}", as.addInstance).Methods("POST")
+	as.router.HandleFunc(OPERATE_CMD+"{epId}/{path}", as.operateCmd).Methods("POST")
+	as.router.HandleFunc(SET_PARAMS+"{epId}/{path}", as.setParams).Methods("POST")
 
-	//router.HandleFunc("/network/{epId}/{type}", re.getNetwork).Methods("GET")
+	//router.HandleFunc("/network/{epId}/{type}", as.getNetwork).Methods("GET")
 
 	return nil
 }

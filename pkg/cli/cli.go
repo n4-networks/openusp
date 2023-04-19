@@ -78,7 +78,7 @@ func (cli *Cli) Init() error {
 	cli.sh.shell = ishell.New()
 
 	// Set default Prompt
-	cli.sh.shell.SetPrompt("N4-Cli>> ")
+	cli.sh.shell.SetPrompt("OpenUsp-Cli>> ")
 	cli.sh.histFile = "history"
 	cli.sh.shell.SetHistoryPath(cli.sh.histFile)
 
@@ -127,7 +127,7 @@ func (cli *Cli) Init() error {
 
 func (cli *Cli) Run() {
 	cli.sh.shell.Println("**************************************************************")
-	cli.sh.shell.Println("                          N4 Cli")
+	cli.sh.shell.Println("                          OpenUsp Cli")
 	cli.sh.shell.Println("**************************************************************")
 	cli.sh.shell.Run()
 }

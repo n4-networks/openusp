@@ -17,7 +17,7 @@ func (cli *Cli) registerNounsLogging() {
 }
 
 func (cli *Cli) loggingInit() error {
-	log.SetPrefix("N4: ")
+	log.SetPrefix("OpenUsp: ")
 	switch cli.cfg.logSetting {
 	case "short":
 		log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)

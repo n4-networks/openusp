@@ -1,4 +1,4 @@
-package rest
+package apiserver
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ import (
 type Cfg struct {
 	httpPort    string
 	isTlsOn     bool
-	mtpAddr     string
+	cntlrAddr   string
 	dbAddr      string
 	dbUserName  string
 	dbPasswd    string
@@ -25,15 +25,15 @@ type Cfg struct {
 	logSetting  string
 }
 
-type mtpHandle struct {
-	grpcIntf mtpgrpc.MtpGrpcClient
-	grpcConn *grpc.ClientConn
+type grpcHandle struct {
+	intf     mtpgrpc.MtpGrpcClient
+	conn     *grpc.ClientConn
 	txMsgCnt uint64
 }
 
-func (m *mtpHandle) incTxMsgCnt() uint64 {
-	m.txMsgCnt++
-	return m.txMsgCnt
+func (g *grpcHandle) incTxMsgCnt() uint64 {
+	g.txMsgCnt++
+	return g.txMsgCnt
 }
 
 type dbHandle struct {
@@ -41,106 +41,106 @@ type dbHandle struct {
 	uspIntf *db.UspDb
 }
 
-type Rest struct {
-	mtp    mtpHandle
+type ApiServer struct {
+	grpcH  grpcHandle
 	db     dbHandle
 	cfg    Cfg
 	router *mux.Router
 }
 
-func (re *Rest) Init() error {
+func (as *ApiServer) Init() error {
 
-	log.Println("Running re Server version:", getVer())
+	log.Println("Running Api Server version:", getVer())
 
 	log.Println("Reading config parameters...")
-	if err := re.config(); err != nil {
-		log.Println("Could not configure re Server, err:", err)
+	if err := as.config(); err != nil {
+		log.Println("Could not configure Api Server, err:", err)
 		return err
 	}
 
 	// Initialize logging
 	log.Println("Initializing logging module...")
-	if err := re.loggingInit(); err != nil {
+	if err := as.loggingInit(); err != nil {
 		log.Println("Logging settings could not be applied")
 	}
 	// Connect o Db
-	log.Println("Connecting to DB server @", re.cfg.dbAddr)
-	if err := re.connectDb(); err != nil {
+	log.Println("Connecting to DB server @", as.cfg.dbAddr)
+	if err := as.connectDb(); err != nil {
 		log.Println("Error in connecting to DB:", err)
 	}
 
-	// Connect to MTP server
-	log.Println("Connecting to MTP @", re.cfg.mtpAddr)
-	if err := re.connectMtp(); err != nil {
-		log.Println("Error in connecting to Mtp:", err)
+	// Connect to Controller
+	log.Println("Connecting to Controller @", as.cfg.cntlrAddr)
+	if err := as.connectToController(); err != nil {
+		log.Println("Error in connecting to Controller:", err)
 	} else {
-		log.Println("Connection to MTP...Success")
+		log.Println("Connection to Controller...Success")
 	}
 
 	// Initialize Router
-	if err := re.initRouter(); err != nil {
+	if err := as.initRouter(); err != nil {
 		log.Println("Error in initializing Router:", err)
 	} else {
 		log.Println("Initializing Router...Success")
 	}
-	log.Println("N4-RESt Server has been initialized")
+	log.Println("API Server has been initialized")
 	return nil
 }
 
-func (re *Rest) config() error {
+func (as *ApiServer) config() error {
 
 	if httpPort, ok := os.LookupEnv("HTTP_PORT"); ok {
-		re.cfg.httpPort = httpPort
+		as.cfg.httpPort = httpPort
 	} else {
-		re.cfg.httpPort = "8080"
+		as.cfg.httpPort = "8080"
 	}
 
 	isTlsOn, ok := os.LookupEnv("HTTP_TLS")
 	if ok && isTlsOn == "1" {
-		re.cfg.isTlsOn = true
+		as.cfg.isTlsOn = true
 	} else {
-		re.cfg.isTlsOn = false
+		as.cfg.isTlsOn = false
 	}
 
 	if dbAddr, ok := os.LookupEnv("DB_ADDR"); ok {
-		re.cfg.dbAddr = dbAddr
+		as.cfg.dbAddr = dbAddr
 	} else {
-		re.cfg.dbAddr = ":27017"
+		as.cfg.dbAddr = ":27017"
 	}
 
 	if dbUserName, ok := os.LookupEnv("DB_USER"); ok {
-		re.cfg.dbUserName = dbUserName
+		as.cfg.dbUserName = dbUserName
 	} else {
 		log.Println("DB_USER is not set")
 		return errors.New("DB_USER not set")
 	}
 
 	if dbPasswd, ok := os.LookupEnv("DB_PASSWD"); ok {
-		re.cfg.dbPasswd = dbPasswd
+		as.cfg.dbPasswd = dbPasswd
 	} else {
 		log.Println("DB_PASSWD is not set")
 		return errors.New("DB_PASSWD not set")
 	}
 
-	if mtpGrpcAddr, ok := os.LookupEnv("MTP_GRPC_ADDR"); ok {
-		re.cfg.mtpAddr = mtpGrpcAddr
+	if cntlrGrpcAddr, ok := os.LookupEnv("CNTLR_GRPC_ADDR"); ok {
+		as.cfg.cntlrAddr = cntlrGrpcAddr
 	} else {
-		re.cfg.mtpAddr = ":9001"
+		as.cfg.cntlrAddr = ":9001"
 	}
 
-	re.cfg.connTimeout = 10 * time.Second
+	as.cfg.connTimeout = 10 * time.Second
 
 	if logging, ok := os.LookupEnv("LOGGING"); ok {
-		re.cfg.logSetting = logging
+		as.cfg.logSetting = logging
 	} else {
-		re.cfg.logSetting = "none"
+		as.cfg.logSetting = "none"
 	}
 	return nil
 }
 
-func (re *Rest) loggingInit() error {
+func (as *ApiServer) loggingInit() error {
 	log.SetPrefix("N4: ")
-	switch re.cfg.logSetting {
+	switch as.cfg.logSetting {
 	case "short":
 		log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
 	case "long":
