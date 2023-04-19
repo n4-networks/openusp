@@ -4,11 +4,6 @@
 *.dll
 *.so
 *.dylib
-*.csr
-*.key
-apiServer
-cli
-controller
 
 # Test binary, built with `go test -c`
 *.test
