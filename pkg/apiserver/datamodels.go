@@ -8,10 +8,10 @@ import (
 )
 
 func (as *ApiServer) getDmObjs(d *uspData) ([]*db.DmObject, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Error: DB interface has not been initilized")
 	}
-	dmObj, err := as.db.uspIntf.GetDmByRegex(d.epId, d.path)
+	dmObj, err := as.dbH.uspIntf.GetDmByRegex(d.epId, d.path)
 	if err != nil {
 		log.Println("Error in getting datamodel from db, err:", err)
 		return nil, err

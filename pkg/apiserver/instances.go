@@ -11,11 +11,11 @@ type Instance struct {
 }
 
 func (as *ApiServer) getInstanceObjs(epId string, objPath string) ([]*Instance, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Error: DB interface has not been initilized")
 	}
 	dmPath := getDmPathFromAbsPath(objPath)
-	dm, err := as.db.uspIntf.GetDm(epId, dmPath)
+	dm, err := as.dbH.uspIntf.GetDm(epId, dmPath)
 	if err != nil {
 		log.Println("GetDm Err:", err)
 		return nil, err
@@ -26,7 +26,7 @@ func (as *ApiServer) getInstanceObjs(epId string, objPath string) ([]*Instance, 
 
 	regexPath := objPath + "[0-9]+."
 	log.Println("GetInstances regexPath:", regexPath)
-	dbInsts, err := as.db.uspIntf.GetInstancesByRegex(epId, regexPath)
+	dbInsts, err := as.dbH.uspIntf.GetInstancesByRegex(epId, regexPath)
 	if err != nil {
 		log.Println("GetInstances from DB failed", err)
 		return nil, err

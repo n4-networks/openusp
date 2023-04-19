@@ -43,7 +43,7 @@ type dbHandle struct {
 
 type ApiServer struct {
 	grpcH  grpcHandle
-	db     dbHandle
+	dbH    dbHandle
 	cfg    Cfg
 	router *mux.Router
 }

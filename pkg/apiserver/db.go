@@ -9,16 +9,16 @@ import (
 )
 
 func (as *ApiServer) IsConnectedToDb() bool {
-	if as.db.client == nil {
+	if as.dbH.client == nil {
 		return false
 	}
 	return true
 }
 
 func (as *ApiServer) connectDb() error {
-	if as.db.client != nil {
+	if as.dbH.client != nil {
 		ctx, _ := context.WithTimeout(context.Background(), as.cfg.connTimeout)
-		as.db.client.Disconnect(ctx)
+		as.dbH.client.Disconnect(ctx)
 	}
 	/* Connect to DB */
 	//log.Println("Connecting to Database @", as.cfg.dbAddr)
@@ -31,8 +31,8 @@ func (as *ApiServer) connectDb() error {
 	if err := usp.Init(dbClient, "usp"); err != nil {
 		return err
 	}
-	as.db.client = dbClient
-	as.db.uspIntf = usp
+	as.dbH.client = dbClient
+	as.dbH.uspIntf = usp
 	log.Println("Connection to DB..SUCCESS")
 	return nil
 }
@@ -44,7 +44,7 @@ func (as *ApiServer) dbDeleteColl(collName string) error {
 		log.Println("Invalid db/collection name.", collName)
 		return errors.New("Invalid collection name")
 	}
-	if err := as.db.uspIntf.DeleteCollection(collName); err != nil {
+	if err := as.dbH.uspIntf.DeleteCollection(collName); err != nil {
 		log.Printf("Error in deleteing db/collection: %v, err: %v\n", collName, err)
 		return err
 	}
@@ -54,10 +54,10 @@ func (as *ApiServer) dbDeleteColl(collName string) error {
 
 func (as *ApiServer) dbGetParamsByRegex(agentId string, path string) (map[string]string, error) {
 	//log.Println("Path:", path)
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	dbParams, err := as.db.uspIntf.GetParamsByRegex(agentId, path)
+	dbParams, err := as.dbH.uspIntf.GetParamsByRegex(agentId, path)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +70,10 @@ func (as *ApiServer) dbGetParamsByRegex(agentId string, path string) (map[string
 
 func (as *ApiServer) dbGetParams(agentId string, path string) (map[string]string, error) {
 	//log.Println("Path:", path)
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	dbParams, err := as.db.uspIntf.GetParams(agentId, path)
+	dbParams, err := as.dbH.uspIntf.GetParams(agentId, path)
 	if err != nil {
 		return nil, err
 	}
@@ -85,10 +85,10 @@ func (as *ApiServer) dbGetParams(agentId string, path string) (map[string]string
 }
 
 func (as *ApiServer) dbGetDmByRegex(agentId string, path string) ([]*DmObject, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	dbDmObjects, err := as.db.uspIntf.GetDmByRegex(agentId, path)
+	dbDmObjects, err := as.dbH.uspIntf.GetDmByRegex(agentId, path)
 	if err != nil {
 		return nil, err
 	}
@@ -131,10 +131,10 @@ func (as *ApiServer) dbGetDmByRegex(agentId string, path string) ([]*DmObject, e
 }
 
 func (as *ApiServer) dbGetDm(agentId string, path string) (*DmObject, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	dbDmObj, err := as.db.uspIntf.GetDm(agentId, path)
+	dbDmObj, err := as.dbH.uspIntf.GetDm(agentId, path)
 	if err != nil {
 		return nil, err
 	}
@@ -174,10 +174,10 @@ func (as *ApiServer) dbGetDm(agentId string, path string) (*DmObject, error) {
 }
 
 func (as *ApiServer) dbGetInstancesByRegex(agentId string, path string) ([]*Instance, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	dbInstances, err := as.db.uspIntf.GetInstancesByRegex(agentId, path)
+	dbInstances, err := as.dbH.uspIntf.GetInstancesByRegex(agentId, path)
 	if err != nil {
 		return nil, err
 	}
@@ -192,10 +192,10 @@ func (as *ApiServer) dbGetInstancesByRegex(agentId string, path string) ([]*Inst
 }
 
 func (as *ApiServer) dbGetInstances(agentId string, path string) ([]*Instance, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	dbInstances, err := as.db.uspIntf.GetInstances(agentId, path)
+	dbInstances, err := as.dbH.uspIntf.GetInstances(agentId, path)
 	if err != nil {
 		return nil, err
 	}
@@ -210,10 +210,10 @@ func (as *ApiServer) dbGetInstances(agentId string, path string) ([]*Instance, e
 }
 
 func (as *ApiServer) dbGetInstanceByAlias(agentId string, aliasName string) (*Instance, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	dbInsts, err := as.db.uspIntf.GetInstancesByUniqueKeys(agentId, "Alias", aliasName)
+	dbInsts, err := as.dbH.uspIntf.GetInstancesByUniqueKeys(agentId, "Alias", aliasName)
 	if err != nil {
 		return nil, err
 	}
@@ -223,12 +223,12 @@ func (as *ApiServer) dbGetInstanceByAlias(agentId string, aliasName string) (*In
 	return inst, nil
 }
 func (as *ApiServer) dbDeleteInstances(agentId string, paths []*string) error {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return errors.New("Not connected to DB")
 	}
 	for _, path := range paths {
 		log.Println("Affected path:", path)
-		if err := as.db.uspIntf.DeleteInstanceFromDb(agentId, *path); err != nil {
+		if err := as.dbH.uspIntf.DeleteInstanceFromDb(agentId, *path); err != nil {
 			log.Println(err)
 			continue
 		}
@@ -236,10 +236,10 @@ func (as *ApiServer) dbDeleteInstances(agentId string, paths []*string) error {
 	return nil
 }
 func (as *ApiServer) dbDeleteInstanceByAlias(agentId string, value string) error {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return errors.New("Not connected to DB")
 	}
-	return as.db.uspIntf.DeleteInstanceByUniqueKey(agentId, "Alias", value)
+	return as.dbH.uspIntf.DeleteInstanceByUniqueKey(agentId, "Alias", value)
 }
 
 type agentInfo struct {
@@ -248,7 +248,7 @@ type agentInfo struct {
 }
 
 func (as *ApiServer) dbWriteCfgInstance(agent agentInfo, path string, level int, key string, params map[string]string) error {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return errors.New("Not connected to DB")
 	}
 	inst := &db.CfgInstance{}
@@ -259,11 +259,11 @@ func (as *ApiServer) dbWriteCfgInstance(agent agentInfo, path string, level int,
 	inst.Params = params
 	inst.Key = key
 	inst.Level = level
-	return as.db.uspIntf.WriteCfgInstance(inst)
+	return as.dbH.uspIntf.WriteCfgInstance(inst)
 }
 
 func (as *ApiServer) dbGetCfgInstancesByPath(agent agentInfo, path string) ([]*cfgInstance, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
 	dbDevInfo := &db.DevType{
@@ -271,7 +271,7 @@ func (as *ApiServer) dbGetCfgInstancesByPath(agent agentInfo, path string) ([]*c
 		Manufacturer: agent.dev.manufacturer,
 		ModelName:    agent.dev.modelName,
 	}
-	dbInsts, err := as.db.uspIntf.GetCfgInstancesByPath(dbDevInfo, path)
+	dbInsts, err := as.dbH.uspIntf.GetCfgInstancesByPath(dbDevInfo, path)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +287,7 @@ func (as *ApiServer) dbGetCfgInstancesByPath(agent agentInfo, path string) ([]*c
 }
 
 func (as *ApiServer) dbGetCfgInstancesByRegex(agent agentInfo, path string) ([]*cfgInstance, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
 	dbDevInfo := &db.DevType{
@@ -295,7 +295,7 @@ func (as *ApiServer) dbGetCfgInstancesByRegex(agent agentInfo, path string) ([]*
 		Manufacturer: agent.dev.manufacturer,
 		ModelName:    agent.dev.modelName,
 	}
-	dbInsts, err := as.db.uspIntf.GetCfgInstancesByRegex(dbDevInfo, path)
+	dbInsts, err := as.dbH.uspIntf.GetCfgInstancesByRegex(dbDevInfo, path)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func (as *ApiServer) dbGetCfgInstancesByRegex(agent agentInfo, path string) ([]*
 }
 
 func (as *ApiServer) dbGetCfgParams(agent agentInfo, path string) (map[string]string, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
 	dbDevInfo := &db.DevType{
@@ -320,11 +320,11 @@ func (as *ApiServer) dbGetCfgParams(agent agentInfo, path string) (map[string]st
 		Manufacturer: agent.dev.manufacturer,
 		ModelName:    agent.dev.modelName,
 	}
-	return as.db.uspIntf.GetCfgParams(dbDevInfo, path)
+	return as.dbH.uspIntf.GetCfgParams(dbDevInfo, path)
 }
 
 func (as *ApiServer) dbGetCfgParamNodesByRegex(agent agentInfo, path string) ([]*cfgParamNode, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
 	dbDevInfo := &db.DevType{
@@ -332,7 +332,7 @@ func (as *ApiServer) dbGetCfgParamNodesByRegex(agent agentInfo, path string) ([]
 		Manufacturer: agent.dev.manufacturer,
 		ModelName:    agent.dev.modelName,
 	}
-	dbCfgParamNodes, err := as.db.uspIntf.GetCfgParamsByRegex(dbDevInfo, path)
+	dbCfgParamNodes, err := as.dbH.uspIntf.GetCfgParamsByRegex(dbDevInfo, path)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +346,7 @@ func (as *ApiServer) dbGetCfgParamNodesByRegex(agent agentInfo, path string) ([]
 	return paramNodes, nil
 }
 func (as *ApiServer) dbWriteCfgParamNode(agent agentInfo, path string, params map[string]string) error {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return errors.New("Not connected to DB")
 	}
 	dbNode := &db.CfgParamNode{}
@@ -355,11 +355,11 @@ func (as *ApiServer) dbWriteCfgParamNode(agent agentInfo, path string, params ma
 	dbNode.Dev.ModelName = agent.dev.modelName
 	dbNode.Path = path
 	dbNode.Params = params
-	return as.db.uspIntf.WriteCfgParamNode(dbNode)
+	return as.dbH.uspIntf.WriteCfgParamNode(dbNode)
 }
 
 func (as *ApiServer) dbDeleteCfgInstancesByRegex(agent agentInfo, path string) error {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return errors.New("Not connected to DB")
 	}
 	dbDev := &db.DevType{
@@ -367,7 +367,7 @@ func (as *ApiServer) dbDeleteCfgInstancesByRegex(agent agentInfo, path string) e
 		Manufacturer: agent.dev.manufacturer,
 		ModelName:    agent.dev.modelName,
 	}
-	if err := as.db.uspIntf.DeleteCfgInstancesByRegex(dbDev, path); err != nil {
+	if err := as.dbH.uspIntf.DeleteCfgInstancesByRegex(dbDev, path); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -375,7 +375,7 @@ func (as *ApiServer) dbDeleteCfgInstancesByRegex(agent agentInfo, path string) e
 }
 
 func (as *ApiServer) dbDeleteCfgParamNodesByRegex(agent agentInfo, path string) error {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return errors.New("Not connected to DB")
 	}
 	dbDev := &db.DevType{
@@ -383,7 +383,7 @@ func (as *ApiServer) dbDeleteCfgParamNodesByRegex(agent agentInfo, path string) 
 		Manufacturer: agent.dev.manufacturer,
 		ModelName:    agent.dev.modelName,
 	}
-	if err := as.db.uspIntf.DeleteCfgParamNodesByRegex(dbDev, path); err != nil {
+	if err := as.dbH.uspIntf.DeleteCfgParamNodesByRegex(dbDev, path); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -391,7 +391,7 @@ func (as *ApiServer) dbDeleteCfgParamNodesByRegex(agent agentInfo, path string) 
 }
 
 func (as *ApiServer) dbDeleteCfgInstanceByKey(agent agentInfo, path string, key string) error {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return errors.New("Not connected to DB")
 	}
 	dbDev := &db.DevType{
@@ -399,7 +399,7 @@ func (as *ApiServer) dbDeleteCfgInstanceByKey(agent agentInfo, path string, key 
 		Manufacturer: agent.dev.manufacturer,
 		ModelName:    agent.dev.modelName,
 	}
-	if err := as.db.uspIntf.DeleteCfgInstance(dbDev, path, key); err != nil {
+	if err := as.dbH.uspIntf.DeleteCfgInstance(dbDev, path, key); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -407,10 +407,10 @@ func (as *ApiServer) dbDeleteCfgInstanceByKey(agent agentInfo, path string, key 
 }
 
 func (as *ApiServer) dbGetAllEndpoints() ([]string, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Not connected to DB")
 	}
-	epIds, err := as.db.uspIntf.GetAllEndpoints()
+	epIds, err := as.dbH.uspIntf.GetAllEndpoints()
 	if err != nil {
 		log.Println(err)
 		return nil, err

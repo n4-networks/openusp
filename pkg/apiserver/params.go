@@ -19,13 +19,13 @@ type Param struct {
 }
 
 func (as *ApiServer) getMultipleObjParams(d *uspData) ([]*ObjParam, error) {
-	if as.db.uspIntf == nil {
+	if as.dbH.uspIntf == nil {
 		return nil, errors.New("Error: DB interface has not been initilized")
 	}
 
 	dmPath := getDmPathFromAbsPath(d.path)
 	log.Println("GetParam, path, dmPath:", d.path, dmPath)
-	dm, err := as.db.uspIntf.GetDm(d.epId, dmPath)
+	dm, err := as.dbH.uspIntf.GetDm(d.epId, dmPath)
 	if err != nil {
 		log.Println("GetDm Err:", err)
 		return nil, err
@@ -54,7 +54,7 @@ func (as *ApiServer) getMultipleObjParams(d *uspData) ([]*ObjParam, error) {
 		log.Println("obj is multi-instance, getting all instances")
 		instPath := d.path + "\\d+.$"
 		log.Println("InstPath search:", instPath)
-		insts, err := as.db.uspIntf.GetInstancesByRegex(d.epId, instPath)
+		insts, err := as.dbH.uspIntf.GetInstancesByRegex(d.epId, instPath)
 		if err != nil {
 			log.Println("Err:", err)
 			return nil, err
@@ -78,7 +78,7 @@ func (as *ApiServer) getMultipleObjParams(d *uspData) ([]*ObjParam, error) {
 
 func (as *ApiServer) getSingleObjParams(epId string, path string, dm *db.DmObject) ([]*Param, error) {
 	regexPath := path + "\\w+$" // path + word(paramName) $: end of string
-	dbParams, err := as.db.uspIntf.GetParamsByRegex(epId, regexPath)
+	dbParams, err := as.dbH.uspIntf.GetParamsByRegex(epId, regexPath)
 	if err != nil {
 		log.Println("GetParamByRegex Err:", err)
 		return nil, err
