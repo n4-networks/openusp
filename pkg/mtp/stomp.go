@@ -2,14 +2,12 @@ package mtp
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net"
 	"time"
 
 	"github.com/gmallard/stompngo"
 	"github.com/gmallard/stompngo/senv"
-	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
 )
 
 type Stomp struct {
@@ -17,29 +15,40 @@ type Stomp struct {
 	RxChannel <-chan stompngo.MessageData
 }
 
-type agentStomp struct {
-	conn      *stompngo.Connection
-	destQueue string
-	msgCnt    uint64
+type StompCfg struct {
+	Mode            string `yaml:"mode"`
+	ServerAddr      string `yaml:"serverAddr"`
+	ServerAddrTLS   string `yaml:"serverAddrTLS"`
+	AgentQueue      string `yaml:"agentQueue"`
+	ControllerQueue string `yaml:"controllerQueue"`
+	UserName        string `yaml:"userName"`
+	Passwd          string `yaml:"passwd"`
+	RetryCount      int    `yaml:"retryCount"`
 }
 
-func (s agentStomp) sendMsg(msg []byte) error {
+type AgentStomp struct {
+	Conn      *stompngo.Connection
+	DestQueue string
+	MsgCnt    uint64
+}
+
+func (s AgentStomp) SendMsg(msg []byte) error {
 	log.Println("Stomp SendMsg is being called")
 	h := stompngo.Headers{}
 	id := stompngo.Uuid()
 	h = h.Add("id", id)
-	h = h.Add("destination", s.destQueue)
+	h = h.Add("destination", s.DestQueue)
 	h = h.Add("content-type", "application/vnd.bbf.usp.msg")
-	log.Printf("Sending USP record to destination: %v, Success", s.destQueue)
-	return s.conn.SendBytes(h, msg)
+	log.Printf("Sending USP record to destination: %v, Success", s.DestQueue)
+	return s.Conn.SendBytes(h, msg)
 }
 
-func (s agentStomp) getMsgCnt() uint64 {
-	return s.msgCnt
+func (s AgentStomp) GetMsgCnt() uint64 {
+	return s.MsgCnt
 }
 
-func (s agentStomp) incMsgCnt() {
-	s.msgCnt++
+func (s AgentStomp) IncMsgCnt() {
+	s.MsgCnt++
 }
 
 func connectHeaders() stompngo.Headers {
@@ -63,8 +72,7 @@ func connectHeaders() stompngo.Headers {
 	}
 	return h
 }
-func (m *Mtp) stompInit() error {
-	cfg := m.Cfg.Stomp
+func StompInit(cfg *StompCfg) (*Stomp, error) {
 	var d net.Dialer
 	var ctx context.Context
 	var n net.Conn
@@ -77,7 +85,7 @@ func (m *Mtp) stompInit() error {
 				log.Printf("Connection STOMP Server failed, retrying (%v of %v)\n", i, cfg.RetryCount)
 			} else {
 				log.Println("Connection to STOMP Server failed, exiting: ", err.Error())
-				return err
+				return nil, err
 			}
 		}
 	}
@@ -86,7 +94,7 @@ func (m *Mtp) stompInit() error {
 	conn, err := stompngo.Connect(n, h)
 	if err != nil {
 		log.Fatalln("Error in connecting to STOMP server: ", err.Error())
-		return err
+		return nil, err
 	}
 
 	// Subcribe to receive queue for msgs coming from Agent
@@ -99,7 +107,7 @@ func (m *Mtp) stompInit() error {
 		log.Fatalf("Could not subscribe to: %v, Err: %v: ", cfg.ControllerQueue, err.Error())
 		h := stompngo.Headers{"noreceipt", "true"} // no receipt
 		conn.Disconnect(h)
-		return err
+		return nil, err
 	}
 	log.Println("Subscribed to Rx Agent Queue: ", cfg.ControllerQueue)
 
@@ -107,93 +115,26 @@ func (m *Mtp) stompInit() error {
 	s.Conn = conn
 	s.RxChannel = sub
 
-	m.connH.stomp = s
-	return nil
+	return s, nil
 }
 
-func (m *Mtp) StompReceiveThread() {
+func StompReceiveThread(s *Stomp, rxChannel chan RxChannelData) {
 	for {
-		stompMsg := <-m.connH.stomp.RxChannel
-
-		rData, err := parseUspRecord(stompMsg.Message.Body)
-		if err != nil {
-			log.Println("Error in parsing the USP record")
-			continue
-		}
-		agentId := rData.fromId
-		log.Println("Rx Agent EndpointId: ", agentId)
-
-		if err := m.validateUspRecord(rData); err != nil {
-			log.Println("Error in validating Rx USP record")
-			continue
-		}
-		if rData.recordType == "STOMP_CONNECT" {
-			aStomp := &agentStomp{}
-			aStomp.conn = m.connH.stomp.Conn
-			aStomp.destQueue = "/queue/agent-1" //agentId
-
-			initData := &agentInitData{}
-			initData.epId = agentId
-			//params, _ := strToMapWithTwoDelims(mData.notify.evt.params["ParameterMap"], ",", ":")
-			//initData.params = params
-			initData.mtpIntf = aStomp
-			go m.agentInitThread(initData)
-			continue
-
-		}
-		mData, err := parseUspMsg(rData)
-		if err != nil {
-			log.Println("Error in parsing the USP message")
-			continue
-		}
-		log.Println("Parsed Rx USP MSG")
-
-		if mData.mType == usp_msg.Header_NOTIFY {
-			if mData.notify == nil {
-				log.Println("mData.notify is nil")
-				continue
-			}
-			aStomp := &agentStomp{}
-			aStomp.conn = m.connH.stomp.Conn
-			aStomp.destQueue = agentId
-
-			if mData.notify.nType == NotifyEvent && mData.notify.evt.name == "Boot!" {
-				log.Println("Received Boot event from agent")
-				initData := &agentInitData{}
-				initData.epId = agentId
-				params, _ := strToMapWithTwoDelims(mData.notify.evt.params["ParameterMap"], ",", ":")
-				initData.params = params
-				initData.mtpIntf = aStomp
-				go m.agentInitThread(initData)
-
-			}
-			if mData.notify.sendResp {
-				log.Println("Preparing USP Notify Response")
-				uspMsg, err := prepareUspMsgNotifyRes(agentId, mData)
-				if err != nil {
-					log.Println("could not prepare notify response record, err:", err)
-					continue
-				}
-				if err := m.sendUspMsgToAgent(agentId, uspMsg, aStomp); err != nil {
-					log.Println("Error in sending USP record, err:", err)
-					continue
-				}
-				log.Println("Sent USP Notify message to agent:", agentId)
-			}
-		}
-		// Non notify messages to be handled here
-		if err := m.processRxUspMsg(agentId, mData); err != nil {
-			log.Println("Error in processing Rx USP msg, err:", err)
-		}
+		stompMsg := <-s.RxChannel
+		rxData := &RxChannelData{}
+		rxData.Rec = stompMsg.Message.Body
+		rxData.MtpType = "stomp"
+		rxChannel <- *rxData
 	}
 }
 
-func (m *Mtp) StompReceiveUspMsgFromAgentWithTimer(timer int64) error {
+/*
+func (c *Cntlr) StompReceiveUspMsgFromAgentWithTimer(timer int64) error {
 	select {
 	case <-time.After(1 * time.Second):
 		log.Println("Timeout after 1 second in reading msg, exiting...")
 		return errors.New("Timeout after 1 second")
-	case stompMsg := <-m.connH.stomp.RxChannel:
+	case stompMsg := <-c.mtpH.stomp.RxChannel:
 		rData, err := parseUspRecord(stompMsg.Message.Body)
 		if err != nil {
 			log.Println("Error in parsing the USP record")
@@ -202,7 +143,7 @@ func (m *Mtp) StompReceiveUspMsgFromAgentWithTimer(timer int64) error {
 		agentId := rData.fromId
 		log.Println("Rx Agent EndpointId: ", agentId)
 
-		if err := m.validateUspRecord(rData); err != nil {
+		if err := validateUspRecord(rData); err != nil {
 			log.Println("Error in validating Rx USP record")
 			return err
 		}
@@ -213,10 +154,11 @@ func (m *Mtp) StompReceiveUspMsgFromAgentWithTimer(timer int64) error {
 			return err1
 		}
 
-		if err := m.processRxUspMsg(rData.fromId, mData); err != nil {
+		if err := c.processRxUspMsg(rData.fromId, mData); err != nil {
 			log.Println("Could not process Rx Msg, err:", err)
 		}
 		log.Println("Processed Rx USP MSG")
 	}
 	return nil
 }
+*/
