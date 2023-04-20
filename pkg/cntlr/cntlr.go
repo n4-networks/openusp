@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/n4-networks/openusp/pkg/db"
-	"github.com/n4-networks/openusp/pkg/pb/mtpgrpc"
+	"github.com/n4-networks/openusp/pkg/pb/cntlrgrpc"
 )
 
 const (
@@ -21,7 +21,7 @@ type Cntlr struct {
 	mtpH   mtpHandler
 	cacheH cacheHandler
 	agentH agentHandler
-	mtpgrpc.UnimplementedMtpGrpcServer
+	cntlrgrpc.UnimplementedGrpcServer
 }
 
 func (c *Cntlr) Init(confFile string) error {

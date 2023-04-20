@@ -24,3 +24,15 @@ show nw wireless
 show mtp
 show logging
 exit
+help
+show agent
+help
+remove db 
+remove db datamodel
+remove db instances
+remove db params
+show agent
+help
+show 
+show agent
+exit

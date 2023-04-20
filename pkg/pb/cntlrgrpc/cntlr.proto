@@ -4,16 +4,16 @@ package cntrlgrpc;
 
 //import "google.protobuf.empty.proto";
 
-option go_package = "github.com/n4-networks/pb/cntlrgrpc";
+option go_package = "github.com/n4-networks/openusp/pkg/pb/cntlrgrpc";
 
-message CntlrSetParamReqData {
+message SetParamReqData {
   string agentId = 1;
   string msgId = 2;
   string path = 3;
   string param = 4;
   string value = 5;
 }
-message CntlrSetParamResData {
+message SetParamResData {
   bool isSuccess = 1;
   string agentId = 2;
   string msgId = 3;
@@ -24,25 +24,25 @@ message CntlrSetParamResData {
   }
   string errMsg = 5;
 }
-message CntlrReqResult{
+message ReqResult{
   bool isSuccess = 1;
   string errMsg = 2;
 }
 
-message CntlrGetParamReqData {
+message GetParamReqData {
   string agentId = 1;
   string msgId = 2;
   string path = 3;
 }
 
-message CntlrGetInstancesReqData {
+message GetInstancesReqData {
   string agentId = 1;
   string msgId = 2;
   string path = 3;
   bool   firstLevelOnly = 4;
 }
 
-message CntlrAddInstanceReqData {
+message AddInstanceReqData {
   string agentId = 1;
   string msgId = 2;
   repeated Object objs = 3;
@@ -51,7 +51,7 @@ message CntlrAddInstanceReqData {
     map<string, string> params = 2;
   }
 }
-message CntlrAddInstanceResData {
+message AddInstanceResData {
   bool isSuccess = 1;
   string agentId = 2;
   string msgId = 3;
@@ -63,7 +63,7 @@ message CntlrAddInstanceResData {
   string errMsg = 5;
 }
 
-message CntlrOperateReqData {
+message OperateReqData {
   string agentId = 1;
   string msgId = 2;
   string cmd = 3;
@@ -72,7 +72,7 @@ message CntlrOperateReqData {
   map<string, string> inputs = 6;
 }
 
-message CntlrOperateResData {
+message OperateResData {
   bool isSuccess = 1;
   string agentId = 2;
   string msgId = 3;
@@ -87,7 +87,7 @@ message CntlrOperateResData {
   }
 }
 
-message CntlrGetDatamodelReqData {
+message GetDatamodelReqData {
   string agentId = 1;
   string msgId = 2;
   string path = 3;
@@ -96,32 +96,32 @@ message CntlrGetDatamodelReqData {
   bool   retParams = 6;
 }
 
-message CntlrDeleteInstanceReqData {
+message DeleteInstanceReqData {
   string agentId = 1;
   string msgId = 2;
   string objPath = 3;
 }
 
-message CntlrGetAgentMsgsData {
+message GetAgentMsgsData {
   string agentId = 1;
 }
 
-message CntlrInfoData {
+message InfoData {
   string version = 1;
 }
 
 message None {}
 
-service CntlrGrpc{
-  rpc CntlrGetParamReq(CntlrGetParamReqData) returns (CntlrReqResult){};
-  rpc CntlrSetParamReq(CntlrSetParamReqData) returns (CntlrSetParamResData){};
-  rpc CntlrGetInstancesReq(CntlrGetInstancesReqData) returns (CntlrReqResult){};
-  rpc CntlrAddInstanceReq(CntlrAddInstanceReqData) returns (CntlrAddInstanceResData){};
-  rpc CntlrOperateReq(CntlrOperateReqData) returns (CntlrOperateResData){};
-  rpc CntlrGetDatamodelReq(CntlrGetDatamodelReqData) returns (CntlrReqResult){};
-  rpc CntlrDeleteInstanceReq(CntlrDeleteInstanceReqData) returns (CntlrReqResult){};
-  rpc CntlrGetAgentMsgs(CntlrGetAgentMsgsData) returns (CntlrReqResult){};
-  rpc CntlrGetInfo(None) returns (CntlrInfoData){};
+service Grpc{
+  rpc GetParamReq(GetParamReqData) returns (ReqResult){};
+  rpc SetParamReq(SetParamReqData) returns (SetParamResData){};
+  rpc GetInstancesReq(GetInstancesReqData) returns (ReqResult){};
+  rpc AddInstanceReq(AddInstanceReqData) returns (AddInstanceResData){};
+  rpc OperateReq(OperateReqData) returns (OperateResData){};
+  rpc GetDatamodelReq(GetDatamodelReqData) returns (ReqResult){};
+  rpc DeleteInstanceReq(DeleteInstanceReqData) returns (ReqResult){};
+  rpc GetAgentMsgs(GetAgentMsgsData) returns (ReqResult){};
+  rpc GetInfo(None) returns (InfoData){};
 
-  rpc CntlrStream(CntlrGetParamReqData) returns (stream CntlrReqResult){};
+  rpc Stream(GetParamReqData) returns (stream ReqResult){};
 }

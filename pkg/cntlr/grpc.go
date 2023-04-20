@@ -9,7 +9,7 @@ import (
 
 	"github.com/n4-networks/openusp/pkg/parser"
 	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
-	"github.com/n4-networks/openusp/pkg/pb/mtpgrpc"
+	"github.com/n4-networks/openusp/pkg/pb/cntlrgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -27,7 +27,7 @@ func (c *Cntlr) GrpcServerThread(port string, exit chan int32) {
 	} else {
 		log.Printf("Starting Grpc Server at: %s", port)
 		grpcServer := grpc.NewServer()
-		mtpgrpc.RegisterMtpGrpcServer(grpcServer, c)
+		cntlrgrpc.RegisterGrpcServer(grpcServer, c)
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatalf("Grpc server failed to serve: %v", err)
 		}
@@ -36,18 +36,18 @@ func (c *Cntlr) GrpcServerThread(port string, exit chan int32) {
 	exit <- GRPC_SERVER
 }
 
-func (c *Cntlr) MtpGetInfo(ctx context.Context, p *mtpgrpc.None) (*mtpgrpc.MtpInfoData, error) {
-	ret := &mtpgrpc.MtpInfoData{}
+func (c *Cntlr) GetInfo(ctx context.Context, p *cntlrgrpc.None) (*cntlrgrpc.InfoData, error) {
+	ret := &cntlrgrpc.InfoData{}
 	ret.Version = getVer()
 	return ret, nil
 }
 
 /* USP releated services */
-func (c *Cntlr) MtpGetParamReq(ctx context.Context, p *mtpgrpc.MtpGetParamReqData) (*mtpgrpc.MtpReqResult, error) {
+func (c *Cntlr) GetParamReq(ctx context.Context, p *cntlrgrpc.GetParamReqData) (*cntlrgrpc.ReqResult, error) {
 	log.Printf("GetParamReqTx: AgetnId: %v, MsgId: %v\n", p.AgentId, p.MsgId)
 	var paths []string
 	paths = append(paths, p.Path)
-	ret := &mtpgrpc.MtpReqResult{IsSuccess: false}
+	ret := &cntlrgrpc.ReqResult{IsSuccess: false}
 
 	log.Printf("GetParamReqTx: Path: %v\n", p.Path)
 	uspMsg, err := parser.CreateUspGetReqMsg(paths, p.MsgId)
@@ -74,11 +74,11 @@ func (c *Cntlr) MtpGetParamReq(ctx context.Context, p *mtpgrpc.MtpGetParamReqDat
 	ret.IsSuccess = true
 	return ret, nil
 }
-func (c *Cntlr) MtpSetParamReq(ctx context.Context, p *mtpgrpc.MtpSetParamReqData) (*mtpgrpc.MtpSetParamResData, error) {
+func (c *Cntlr) SetParamReq(ctx context.Context, p *cntlrgrpc.SetParamReqData) (*cntlrgrpc.SetParamResData, error) {
 	log.Printf("SetParamReqTx: AgetnId: %v, MsgId: %v\n", p.AgentId, p.MsgId)
 	uspMsg, err := createSetMsg(p.Path, p.Param, p.Value, p.MsgId)
 	log.Printf("SetParamReqRx: Path: %v, Param: %v, Value: %v\n", p.Path, p.Param, p.Value)
-	ret := &mtpgrpc.MtpSetParamResData{IsSuccess: false}
+	ret := &cntlrgrpc.SetParamResData{IsSuccess: false}
 	if err != nil {
 		log.Println("Could not prepare Usp  msg of type: SET")
 		ret.ErrMsg = "Could not prepare USP msg"
@@ -119,13 +119,13 @@ func (c *Cntlr) MtpSetParamReq(ctx context.Context, p *mtpgrpc.MtpSetParamReqDat
 	return ret, nil
 }
 
-func (c *Cntlr) MtpGetInstancesReq(ctx context.Context, p *mtpgrpc.MtpGetInstancesReqData) (*mtpgrpc.MtpReqResult, error) {
+func (c *Cntlr) GetInstancesReq(ctx context.Context, p *cntlrgrpc.GetInstancesReqData) (*cntlrgrpc.ReqResult, error) {
 	log.Printf("GetInstancesReqTx: AgetnId: %v, MsgId: %v\n", p.AgentId, p.MsgId)
 	var objPaths []string
 	objPaths = append(objPaths, p.Path)
 	log.Printf("GetInstancesReqTx: Path: %v\n", p.Path)
 	uspMsg, err := parser.CreateUspGetInstancesMsg(objPaths, p.FirstLevelOnly, p.MsgId)
-	ret := &mtpgrpc.MtpReqResult{IsSuccess: false}
+	ret := &cntlrgrpc.ReqResult{IsSuccess: false}
 	if err != nil {
 		log.Println("Could not prepare Usp  msg of type: GET INSTANCE")
 		ret.ErrMsg = err.Error()
@@ -151,7 +151,7 @@ func (c *Cntlr) MtpGetInstancesReq(ctx context.Context, p *mtpgrpc.MtpGetInstanc
 	return ret, nil
 }
 
-func (c *Cntlr) MtpAddInstanceReq(ctx context.Context, req *mtpgrpc.MtpAddInstanceReqData) (*mtpgrpc.MtpAddInstanceResData, error) {
+func (c *Cntlr) AddInstanceReq(ctx context.Context, req *cntlrgrpc.AddInstanceReqData) (*cntlrgrpc.AddInstanceResData, error) {
 	log.Printf("AddInstanceReqTx: AgetnId: %v, MsgId: %v\n", req.AgentId, req.MsgId)
 	var createObjs []*usp_msg.Add_CreateObject
 	for _, obj := range req.GetObjs() {
@@ -169,7 +169,7 @@ func (c *Cntlr) MtpAddInstanceReq(ctx context.Context, req *mtpgrpc.MtpAddInstan
 		createObjs = append(createObjs, createObj)
 	}
 
-	ret := &mtpgrpc.MtpAddInstanceResData{IsSuccess: false}
+	ret := &cntlrgrpc.AddInstanceResData{IsSuccess: false}
 
 	uspMsg, err := parser.CreateUspAddReqMsg(createObjs, req.MsgId)
 	if err != nil {
@@ -205,7 +205,7 @@ func (c *Cntlr) MtpAddInstanceReq(ctx context.Context, req *mtpgrpc.MtpAddInstan
 	ret.AgentId = req.AgentId
 	ret.MsgId = req.MsgId
 	if cacheInst.OpIsSuccess {
-		grpcInst := &mtpgrpc.MtpAddInstanceResData_Instance{}
+		grpcInst := &cntlrgrpc.AddInstanceResData_Instance{}
 		grpcInst.Path = cacheInst.Path
 		grpcInst.UniqueKeys = cacheInst.UniqueKeys
 		ret.Inst = append(ret.Inst, grpcInst)
@@ -217,34 +217,34 @@ func (c *Cntlr) MtpAddInstanceReq(ctx context.Context, req *mtpgrpc.MtpAddInstan
 	return ret, nil
 }
 
-func (c *Cntlr) MtpOperateReq(ctx context.Context, p *mtpgrpc.MtpOperateReqData) (*mtpgrpc.MtpOperateResData, error) {
+func (c *Cntlr) OperateReq(ctx context.Context, p *cntlrgrpc.OperateReqData) (*cntlrgrpc.OperateResData, error) {
 	log.Printf("OperatgeReqTx: AgetnId: %v, MsgId: %v\n", p.AgentId, p.MsgId)
 	log.Printf("OperatgeReqTx: Cmd: %v, CmdKey: %v\n", p.Cmd, p.CmdKey)
 	uspMsg, err := parser.CreateUspOperateReqMsg(p.Cmd, p.CmdKey, p.Resp, p.MsgId, p.Inputs)
-	ret := &mtpgrpc.MtpOperateResData{IsSuccess: false}
+	ret := &cntlrgrpc.OperateResData{IsSuccess: false}
 	if err != nil {
 		log.Println("Could not prepare Usp  msg of type: OPERATE")
-		errMsg := &mtpgrpc.MtpOperateResData_ErrMsg{ErrMsg: err.Error()}
+		errMsg := &cntlrgrpc.OperateResData_ErrMsg{ErrMsg: err.Error()}
 		ret.Resp = errMsg
 		return ret, err
 	}
 	mtpIntf, err := c.getAgentMtp(p.AgentId)
 	if err != nil {
 		log.Println("Could not get agentMtp Interface for agent:", p.AgentId)
-		errMsg := &mtpgrpc.MtpOperateResData_ErrMsg{ErrMsg: err.Error()}
+		errMsg := &cntlrgrpc.OperateResData_ErrMsg{ErrMsg: err.Error()}
 		ret.Resp = errMsg
 		return ret, err
 	}
 	log.Println("OperateReq: Formed stomp msg with agendId:", p.AgentId)
 	if err := c.sendUspMsgToAgent(p.AgentId, uspMsg, mtpIntf); err != nil {
 		log.Println("Error in sending Operate msg to agent")
-		errMsg := &mtpgrpc.MtpOperateResData_ErrMsg{ErrMsg: err.Error()}
+		errMsg := &cntlrgrpc.OperateResData_ErrMsg{ErrMsg: err.Error()}
 		ret.Resp = errMsg // err.Error()
 		return ret, err
 	}
 	if cacheErr, err := c.cacheGetError(p.AgentId, p.MsgId); err == nil {
 		//ret.ErrMsg = cacheErr.Msg
-		errMsg := &mtpgrpc.MtpOperateResData_ErrMsg{ErrMsg: cacheErr.Msg}
+		errMsg := &cntlrgrpc.OperateResData_ErrMsg{ErrMsg: cacheErr.Msg}
 		ret.Resp = errMsg // err.Error()
 		return ret, nil
 	}
@@ -252,13 +252,13 @@ func (c *Cntlr) MtpOperateReq(ctx context.Context, p *mtpgrpc.MtpOperateReqData)
 	return ret, nil
 }
 
-func (c *Cntlr) MtpGetDatamodelReq(ctx context.Context, p *mtpgrpc.MtpGetDatamodelReqData) (*mtpgrpc.MtpReqResult, error) {
+func (c *Cntlr) GetDatamodelReq(ctx context.Context, p *cntlrgrpc.GetDatamodelReqData) (*cntlrgrpc.ReqResult, error) {
 	log.Printf("GetDatamodelReqTx: AgetnId: %v, MsgId: %v\n", p.AgentId, p.MsgId)
 	log.Printf("GetDatamodelReqTx: Path: %v\n", p.Path)
 	var paths []string
 	paths = append(paths, p.Path)
 	uspMsg, err := parser.CreateUspGetSupportedDmMsg(paths, p.RetCmd, p.RetEvents, p.RetParams, p.MsgId)
-	ret := &mtpgrpc.MtpReqResult{IsSuccess: false}
+	ret := &cntlrgrpc.ReqResult{IsSuccess: false}
 	if err != nil {
 		log.Println("Could not prepare Usp msg of type: GET DATAMODEL")
 		return ret, err
@@ -278,13 +278,13 @@ func (c *Cntlr) MtpGetDatamodelReq(ctx context.Context, p *mtpgrpc.MtpGetDatamod
 	return ret, nil
 }
 
-func (c *Cntlr) MtpDeleteInstanceReq(ctx context.Context, p *mtpgrpc.MtpDeleteInstanceReqData) (*mtpgrpc.MtpReqResult, error) {
+func (c *Cntlr) DeleteInstanceReq(ctx context.Context, p *cntlrgrpc.DeleteInstanceReqData) (*cntlrgrpc.ReqResult, error) {
 	log.Printf("DeleteInstanceReqTx: AgetnId: %v, MsgId: %v\n", p.AgentId, p.MsgId)
 	var objPaths []string
 	objPaths = append(objPaths, p.ObjPath)
 	log.Printf("DeleteInstanceReqTx: Path: %v\n", p.ObjPath)
 	uspMsg, err := parser.CreateUspDeleteReqMsg(objPaths, p.MsgId)
-	ret := &mtpgrpc.MtpReqResult{IsSuccess: false}
+	ret := &cntlrgrpc.ReqResult{IsSuccess: false}
 	if err != nil {
 		log.Println("Could not prepare Usp msg of type: DELETE INSTANCE")
 		return ret, err

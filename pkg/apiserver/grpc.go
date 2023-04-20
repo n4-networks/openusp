@@ -6,7 +6,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/n4-networks/openusp/pkg/pb/mtpgrpc"
+	"github.com/n4-networks/openusp/pkg/pb/cntlrgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -35,7 +35,7 @@ func (as *ApiServer) connectToController() error {
 	if err != nil {
 		return err
 	}
-	as.grpcH.intf = mtpgrpc.NewMtpGrpcClient(conn)
+	as.grpcH.intf = cntlrgrpc.NewGrpcClient(conn)
 	as.grpcH.conn = conn
 	return nil
 }
@@ -52,8 +52,8 @@ func (as *ApiServer) GetCntlrInfo() (*CntlrInfo, error) {
 	if as.grpcH.intf == nil {
 		return nil, errors.New("Controller is not connected")
 	}
-	var none mtpgrpc.None
-	res, err := as.grpcH.intf.MtpGetInfo(context.Background(), &none)
+	var none cntlrgrpc.None
+	res, err := as.grpcH.intf.GetInfo(context.Background(), &none)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 		return nil, err
@@ -73,7 +73,7 @@ func (as *ApiServer) CntlrSetParamReq(epId string, path string, params map[strin
 		paramValue = v
 		break
 	}
-	var in mtpgrpc.MtpSetParamReqData
+	var in cntlrgrpc.SetParamReqData
 	in.AgentId = epId
 	in.MsgId = "SET" + strconv.FormatUint(as.grpcH.incTxMsgCnt(), 10)
 	in.Path = path
@@ -81,7 +81,7 @@ func (as *ApiServer) CntlrSetParamReq(epId string, path string, params map[strin
 	in.Value = paramValue
 	log.Println("Sending setparam request to Controller, path:", path)
 	log.Printf("%v: %v\n", paramName, paramValue)
-	res, err := as.grpcH.intf.MtpSetParamReq(context.Background(), &in)
+	res, err := as.grpcH.intf.SetParamReq(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 	}
@@ -96,12 +96,12 @@ func (as *ApiServer) CntlrGetParamReq(epId string, path string) error {
 	if as.grpcH.intf == nil {
 		return errors.New("Controller is not connected")
 	}
-	var in mtpgrpc.MtpGetParamReqData
+	var in cntlrgrpc.GetParamReqData
 	in.AgentId = epId
 	in.MsgId = "GET" + strconv.FormatUint(as.grpcH.incTxMsgCnt(), 10)
 	in.Path = path
 	log.Println("Sending getparam request to Controller , path:", path)
-	out, err := as.grpcH.intf.MtpGetParamReq(context.Background(), &in)
+	out, err := as.grpcH.intf.GetParamReq(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 	}
@@ -117,13 +117,13 @@ func (as *ApiServer) CntlrGetInstancesReq(epId string, objPath string, firstLeve
 	if as.grpcH.intf == nil {
 		return errors.New("Controller is not connected")
 	}
-	var in mtpgrpc.MtpGetInstancesReqData
+	var in cntlrgrpc.GetInstancesReqData
 	in.AgentId = epId
 	in.MsgId = "GET_INST" + strconv.FormatUint(as.grpcH.incTxMsgCnt(), 10)
 	in.Path = objPath
 	in.FirstLevelOnly = firstLevelOnly
 	log.Println("Sending GetInstance request to Controller, path:", objPath)
-	out, err := as.grpcH.intf.MtpGetInstancesReq(context.Background(), &in)
+	out, err := as.grpcH.intf.GetInstancesReq(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 	}
@@ -138,12 +138,12 @@ func (as *ApiServer) CntlrAddInstanceReq(epId string, objs []*object) ([]*Instan
 	if as.grpcH.intf == nil {
 		return nil, errors.New("Controller is not connected")
 	}
-	var in mtpgrpc.MtpAddInstanceReqData
+	var in cntlrgrpc.AddInstanceReqData
 
 	in.AgentId = epId
 	in.MsgId = "ADD" + strconv.FormatUint(as.grpcH.incTxMsgCnt(), 10)
 	for _, obj := range objs {
-		addInstanceObj := &mtpgrpc.MtpAddInstanceReqData_Object{}
+		addInstanceObj := &cntlrgrpc.AddInstanceReqData_Object{}
 		addInstanceObj.Path = obj.path
 		addInstanceObj.Params = obj.params
 		in.Objs = append(in.Objs, addInstanceObj)
@@ -151,7 +151,7 @@ func (as *ApiServer) CntlrAddInstanceReq(epId string, objs []*object) ([]*Instan
 
 	var instances []*Instance
 	log.Println("Sending AddInstance request to Controller")
-	out, err := as.grpcH.intf.MtpAddInstanceReq(context.Background(), &in)
+	out, err := as.grpcH.intf.AddInstanceReq(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 		return nil, err
@@ -176,7 +176,7 @@ func (as *ApiServer) CntlrOperateReq(epId string, cmd string, cmdKey string, res
 	if as.grpcH.intf == nil {
 		return errors.New("Controller is not connected")
 	}
-	var in mtpgrpc.MtpOperateReqData
+	var in cntlrgrpc.OperateReqData
 	in.AgentId = epId
 	in.MsgId = "OP" + strconv.FormatUint(as.grpcH.incTxMsgCnt(), 10)
 	in.Cmd = cmd
@@ -184,7 +184,7 @@ func (as *ApiServer) CntlrOperateReq(epId string, cmd string, cmdKey string, res
 	in.Resp = resp
 	in.Inputs = inputs
 	log.Println("Sending Operate request to Controller, cmd:", cmd)
-	out, err := as.grpcH.intf.MtpOperateReq(context.Background(), &in)
+	out, err := as.grpcH.intf.OperateReq(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 	}
@@ -199,7 +199,7 @@ func (as *ApiServer) CntlrGetDatamodelReq(epId string, path string) error {
 	if as.grpcH.intf == nil {
 		return errors.New("Controller is not connected")
 	}
-	var in mtpgrpc.MtpGetDatamodelReqData
+	var in cntlrgrpc.GetDatamodelReqData
 	in.AgentId = epId
 	in.MsgId = "GET_DM" + strconv.FormatUint(as.grpcH.incTxMsgCnt(), 10)
 	in.Path = path
@@ -207,7 +207,7 @@ func (as *ApiServer) CntlrGetDatamodelReq(epId string, path string) error {
 	in.RetEvents = true
 	in.RetParams = true
 	log.Println("Sending Get Datamodel request to Controller, path:", path)
-	out, err := as.grpcH.intf.MtpGetDatamodelReq(context.Background(), &in)
+	out, err := as.grpcH.intf.GetDatamodelReq(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 	}
@@ -223,12 +223,12 @@ func (as *ApiServer) CntlrDeleteInstanceReq(epId string, objPath string) error {
 		return errors.New("Controller is not connected")
 	}
 
-	var in mtpgrpc.MtpDeleteInstanceReqData
+	var in cntlrgrpc.DeleteInstanceReqData
 	in.AgentId = epId
 	in.MsgId = "DELETE_" + strconv.FormatUint(as.grpcH.incTxMsgCnt(), 10)
 	in.ObjPath = objPath
 	log.Println("Sending Delete Instance request to Controller")
-	out, err := as.grpcH.intf.MtpDeleteInstanceReq(context.Background(), &in)
+	out, err := as.grpcH.intf.DeleteInstanceReq(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 	}
@@ -243,10 +243,10 @@ func (as *ApiServer) CntlrGetAgentMsgs(epId string) error {
 	if as.grpcH.intf == nil {
 		return errors.New("Controller is not connected")
 	}
-	var in mtpgrpc.MtpGetAgentMsgsData
+	var in cntlrgrpc.GetAgentMsgsData
 	in.AgentId = epId
 	log.Println("Sending get agent msg request to Controller")
-	out, err := as.grpcH.intf.MtpGetAgentMsgs(context.Background(), &in)
+	out, err := as.grpcH.intf.GetAgentMsgs(context.Background(), &in)
 	if err != nil {
 		log.Println("gRPC error: ", err)
 	}

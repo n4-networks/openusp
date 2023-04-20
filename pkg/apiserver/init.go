@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/n4-networks/openusp/pkg/db"
-	"github.com/n4-networks/openusp/pkg/pb/mtpgrpc"
+	"github.com/n4-networks/openusp/pkg/pb/cntlrgrpc"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 )
@@ -26,7 +26,7 @@ type Cfg struct {
 }
 
 type grpcHandle struct {
-	intf     mtpgrpc.MtpGrpcClient
+	intf     cntlrgrpc.GrpcClient
 	conn     *grpc.ClientConn
 	txMsgCnt uint64
 }
