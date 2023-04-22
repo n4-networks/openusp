@@ -1,11 +1,8 @@
 package apiserver
 
 import (
-	"errors"
 	"io/ioutil"
 	"log"
-	"os"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/n4-networks/openusp/pkg/db"
@@ -13,17 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 )
-
-type Cfg struct {
-	httpPort    string
-	isTlsOn     bool
-	cntlrAddr   string
-	dbAddr      string
-	dbUserName  string
-	dbPasswd    string
-	connTimeout time.Duration
-	logSetting  string
-}
 
 type grpcHandle struct {
 	intf     cntlrgrpc.GrpcClient
@@ -44,7 +30,7 @@ type dbHandle struct {
 type ApiServer struct {
 	grpcH  grpcHandle
 	dbH    dbHandle
-	cfg    Cfg
+	cfg    apiServerCfg
 	router *mux.Router
 }
 
@@ -84,57 +70,6 @@ func (as *ApiServer) Init() error {
 		log.Println("Initializing Router...Success")
 	}
 	log.Println("API Server has been initialized")
-	return nil
-}
-
-func (as *ApiServer) config() error {
-
-	if httpPort, ok := os.LookupEnv("HTTP_PORT"); ok {
-		as.cfg.httpPort = httpPort
-	} else {
-		as.cfg.httpPort = "8080"
-	}
-
-	isTlsOn, ok := os.LookupEnv("HTTP_TLS")
-	if ok && isTlsOn == "1" {
-		as.cfg.isTlsOn = true
-	} else {
-		as.cfg.isTlsOn = false
-	}
-
-	if dbAddr, ok := os.LookupEnv("DB_ADDR"); ok {
-		as.cfg.dbAddr = dbAddr
-	} else {
-		as.cfg.dbAddr = ":27017"
-	}
-
-	if dbUserName, ok := os.LookupEnv("DB_USER"); ok {
-		as.cfg.dbUserName = dbUserName
-	} else {
-		log.Println("DB_USER is not set")
-		return errors.New("DB_USER not set")
-	}
-
-	if dbPasswd, ok := os.LookupEnv("DB_PASSWD"); ok {
-		as.cfg.dbPasswd = dbPasswd
-	} else {
-		log.Println("DB_PASSWD is not set")
-		return errors.New("DB_PASSWD not set")
-	}
-
-	if cntlrGrpcAddr, ok := os.LookupEnv("CNTLR_GRPC_ADDR"); ok {
-		as.cfg.cntlrAddr = cntlrGrpcAddr
-	} else {
-		as.cfg.cntlrAddr = ":9001"
-	}
-
-	as.cfg.connTimeout = 10 * time.Second
-
-	if logging, ok := os.LookupEnv("LOGGING"); ok {
-		as.cfg.logSetting = logging
-	} else {
-		as.cfg.logSetting = "none"
-	}
 	return nil
 }
 

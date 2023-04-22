@@ -10,14 +10,16 @@ import (
 
 	"github.com/abiosoft/ishell"
 	"github.com/go-stomp/stomp"
+	"github.com/joho/godotenv"
 )
 
-type cfgHandler struct {
-	restSrvAddr string
-	stompAddr   string
-	histFile    string
-	connTimeout time.Duration
-	logSetting  string
+type cliCfg struct {
+	apiServerAddr string
+	stompAddr     string
+	agentId       string
+	histFile      string
+	connTimeout   time.Duration
+	logSetting    string
 }
 type restHandler struct {
 	client *http.Client
@@ -34,10 +36,10 @@ type stompHandler struct {
 }
 
 type Cli struct {
+	cfg        cliCfg
 	agent      agentInfo
 	stomp      stompHandler
 	sh         shHandler
-	cfg        cfgHandler
 	rest       restHandler
 	lastCmdErr error
 }
@@ -52,7 +54,7 @@ func (cli *Cli) ClearLastCmdErr() {
 
 func (cli *Cli) Init() error {
 
-	if err := cli.config(); err != nil {
+	if err := cli.loadConfigFromEnv(); err != nil {
 		log.Println("Could not configure CLI, err:", err)
 		return err
 	}
@@ -132,22 +134,40 @@ func (cli *Cli) Run() {
 	cli.sh.shell.Run()
 }
 
-func (cli *Cli) config() error {
+func (cli *Cli) loadConfigFromEnv() error {
 
-	if restSrvAddr, ok := os.LookupEnv("REST_SRV_ADDR"); ok {
-		cli.cfg.restSrvAddr = restSrvAddr
+	if err := godotenv.Load(); err != nil {
+		log.Println("Error in loading .env file")
+		return err
+	}
+
+	if env, ok := os.LookupEnv("API_SERVER_ADDR"); ok {
+		cli.cfg.apiServerAddr = env
 	} else {
-		cli.cfg.restSrvAddr = "http://localhost:8080"
+		cli.cfg.apiServerAddr = "http://localhost:8080"
 	}
 
 	cli.cfg.connTimeout = 10 * time.Second
-	cli.cfg.histFile = "history"
 
-	if logging, ok := os.LookupEnv("CLI_LOGGING"); ok {
-		cli.cfg.logSetting = logging
+	if env, ok := os.LookupEnv("HISTORY_FILENAME"); ok {
+		cli.cfg.histFile = env
+	} else {
+		cli.cfg.histFile = "history"
+	}
+
+	if env, ok := os.LookupEnv("LOGGING"); ok {
+		cli.cfg.logSetting = env
 	} else {
 		cli.cfg.logSetting = "none"
 	}
+
+	if env, ok := os.LookupEnv("AGENT_ID"); ok {
+		cli.cfg.agentId = env
+	} else {
+		log.Println("Default Agent Endpoint ID is not defined, please configure through cli anytime")
+	}
+
+	log.Printf("Cli Config params: %+v\n", cli.cfg)
 	return nil
 }
 

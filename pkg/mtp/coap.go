@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	coap "github.com/plgd-dev/go-coap/v2"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
@@ -18,22 +20,24 @@ import (
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 )
 
-type CoAPServerCfg struct {
-	Mode     string `yaml:"mode"`
-	Port     string `yaml:"port"`
-	DTLSPort string `yaml:"dtlsPort"`
+type coapServerCfg struct {
+	mode     string
+	port     string
+	dtlsPort string
 }
 
-type CoAPClientCfg struct {
-	Mode           string `yaml:"mode"`
-	ServerAddr     string `yaml:"serverAddr"`
-	ServerAddrDTLS string `yaml:"serverAddrDTLS"`
+type coapClientCfg struct {
+	mode           string
+	serverPort     string
+	serverAddrDTLS string
 }
 
-type CoAPCfg struct {
-	Server CoAPServerCfg `yaml:"server"`
-	Client CoAPClientCfg `yaml:"client"`
+type coapCfg struct {
+	server coapServerCfg
+	client coapClientCfg
 }
+
+var cCfg coapCfg
 
 type CoAP struct {
 	Router *mux.Router
@@ -60,18 +64,51 @@ type AgentCoap struct {
 	msgCnt uint64
 }
 
-func CoAPServerInit(cfg *CoAPCfg) (*CoAP, error) {
+func loadCoapConfigFromEnv() error {
+
+	if err := godotenv.Load(); err != nil {
+		log.Println("Error in loading .env file")
+		return err
+	}
+
+	if env, ok := os.LookupEnv("COAP_SERVER_MODE"); ok {
+		cCfg.server.mode = env
+	} else {
+		log.Println("CoAP mode is not set, default is nondtls")
+		cCfg.server.mode = "nondtls"
+	}
+
+	if env, ok := os.LookupEnv("COAP_SERVER_PORT"); ok {
+		cCfg.server.port = env
+	} else {
+		log.Println("COAP Server Port is not set, default is 5683")
+		cCfg.server.port = "5683"
+	}
+
+	log.Printf("CoAP Config params: %+v\n", cCfg)
+	return nil
+}
+
+func CoAPServerInit() (*CoAP, error) {
+
+	if err := loadCoapConfigFromEnv(); err != nil {
+		log.Println("Error in loading CoAP config from Env")
+		return nil, err
+	}
+
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware)
 
 	r.Handle("/a", mux.HandlerFunc(coapReceiveHandler))
 	r.Handle("/b", mux.HandlerFunc(handleB))
 	coapH := &CoAP{Router: r}
+
 	return coapH, nil
 }
 
-func CoAPServerThread(c *CoAP, addr string) {
+func CoAPServerThread(c *CoAP) {
 
+	addr := ":" + cCfg.server.port
 	log.Println("Starting CoAP server at:", addr)
 	log.Fatal(coap.ListenAndServe("udp", addr, c.Router))
 

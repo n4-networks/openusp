@@ -1,7 +1,8 @@
 version: '3.7'
 services:
-  mongodb:
+  openusp-db:
     image: mongo:latest
+    container_name: openusp-db
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -10,32 +11,33 @@ services:
     volumes:
       - mongodb_data_container:/data/db
     networks:
-      network:
+      openusp:
         ipv4_address: 10.5.0.2
-  activemq:
+  openusp-broker:
     image: rmohr/activemq:latest
-    container_name: activemq
+    container_name: openusp-broker
     ports:
       - 61616:61616
       - 8161:8161
       - 1883:1883
     networks:
-      network:
+      openusp:
         ipv4_address: 10.5.0.3
-  redis:
+  openusp-cache:
     image: redis:latest
-    container_name: redis 
+    container_name: openusp-cache
     ports:
       - 6379:6379
     networks:
-      network:
+      openusp:
         ipv4_address: 10.5.0.4
 
 volumes:
   mongodb_data_container:
 
 networks:
-  network:
+  openusp:
+    name: openusp
     driver: bridge
     ipam:
       config:

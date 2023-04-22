@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	UspDbName                = "usp"
 	UspParamCollection       = "params"
 	UspDmCollection          = "datamodel"
 	UspInstanceCollection    = "instances"
@@ -24,12 +23,13 @@ type UspDb struct {
 	cfgParamColl    *mongo.Collection
 }
 
-func (u *UspDb) Init(client *mongo.Client, dbName string) error {
+func (u *UspDb) Init(client *mongo.Client) error {
 	if client == nil {
 		err := errors.New("DB is not connected, please try again...")
 		return err
 	}
 
+	dbName := cfg.name
 	u.paramColl = client.Database(dbName).Collection(UspParamCollection)
 	u.dmColl = client.Database(dbName).Collection(UspDmCollection)
 	u.instanceColl = client.Database(dbName).Collection(UspInstanceCollection)

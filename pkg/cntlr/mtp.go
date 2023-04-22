@@ -7,12 +7,6 @@ import (
 	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
 )
 
-type MtpCfg struct {
-	CoAP  mtp.CoAPCfg  `yaml:"coap"`
-	Stomp mtp.StompCfg `yaml:"stomp"`
-	Mqtt  mtp.MqttCfg  `yaml:"mqtt"`
-}
-
 type mtpHandler struct {
 	stomp     *mtp.Stomp
 	mqtt      *mtp.Mqtt
@@ -26,7 +20,7 @@ func (c *Cntlr) mtpInit() error {
 	mtp.SetRxChannel(c.mtpH.rxChannel)
 
 	// Initialize Stomp client
-	stompHandler, err := mtp.StompInit(&c.Cfg.Mtp.Stomp)
+	stompHandler, err := mtp.StompInit()
 	if err != nil {
 		log.Println("Error in stompInit()")
 		return err
@@ -34,7 +28,7 @@ func (c *Cntlr) mtpInit() error {
 	c.mtpH.stomp = stompHandler
 
 	// Initialize Mqtt client
-	mqttClient, err1 := mtp.MqttInit(&c.Cfg.Mtp.Mqtt)
+	mqttClient, err1 := mtp.MqttInit()
 	if err1 != nil {
 		log.Println("Error in mqttInit()")
 		return err1
@@ -43,7 +37,7 @@ func (c *Cntlr) mtpInit() error {
 	//c.mtpH.mqtt.Client = mqttClient
 
 	// Initialize  CoAP Server
-	coapHandler, err2 := mtp.CoAPServerInit(&c.Cfg.Mtp.CoAP)
+	coapHandler, err2 := mtp.CoAPServerInit()
 	if err2 != nil {
 		log.Println("Error in CoapServerInit()")
 		return err2
@@ -55,15 +49,13 @@ func (c *Cntlr) mtpInit() error {
 }
 
 func (c *Cntlr) MtpStart() error {
-	addr := ":" + c.Cfg.Mtp.CoAP.Server.Port
-	go mtp.CoAPServerThread(c.mtpH.coap, addr)
+	go mtp.CoAPServerThread(c.mtpH.coap)
 
 	rxChannel := c.mtpH.rxChannel
 	go mtp.StompReceiveThread(c.mtpH.stomp, rxChannel)
 
-	topic := c.Cfg.Mtp.Mqtt.Topic
-	if err := mtp.MqttStart(c.mtpH.mqtt.Client, topic); err != nil {
-		log.Println("Error in subscribing to Mqtt Topic: ", topic)
+	if err := mtp.MqttStart(c.mtpH.mqtt.Client); err != nil {
+		log.Println("Error in Strating MQTT MTP")
 	}
 	return nil
 }

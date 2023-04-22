@@ -34,7 +34,7 @@ type CParamSetResult struct {
 func (c *Cntlr) cacheInit() error {
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{
-			"server1": c.Cfg.Cache.ServerAddr,
+			"server1": c.cfg.cache.serverAddr,
 		},
 		HeartbeatFrequency: time.Hour,
 	})

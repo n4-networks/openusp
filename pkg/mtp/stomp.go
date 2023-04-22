@@ -2,12 +2,16 @@ package mtp
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gmallard/stompngo"
 	"github.com/gmallard/stompngo/senv"
+	"github.com/joho/godotenv"
 )
 
 type Stomp struct {
@@ -15,21 +19,83 @@ type Stomp struct {
 	RxChannel <-chan stompngo.MessageData
 }
 
-type StompCfg struct {
-	Mode            string `yaml:"mode"`
-	ServerAddr      string `yaml:"serverAddr"`
-	ServerAddrTLS   string `yaml:"serverAddrTLS"`
-	AgentQueue      string `yaml:"agentQueue"`
-	ControllerQueue string `yaml:"controllerQueue"`
-	UserName        string `yaml:"userName"`
-	Passwd          string `yaml:"passwd"`
-	RetryCount      int    `yaml:"retryCount"`
+type stompCfg struct {
+	mode            string
+	serverAddr      string
+	serverAddrTLS   string
+	agentQueue      string
+	controllerQueue string
+	userName        string
+	passwd          string
+	retryCount      int
 }
+
+var sCfg stompCfg
 
 type AgentStomp struct {
 	Conn      *stompngo.Connection
 	DestQueue string
 	MsgCnt    uint64
+}
+
+func loadStompConfigFromEnv() error {
+
+	if err := godotenv.Load(); err != nil {
+		log.Println("Error in loading .env file")
+		return err
+	}
+
+	if env, ok := os.LookupEnv("STOMP_MODE"); ok {
+		sCfg.mode = env
+	} else {
+		log.Println("STOMP mode is not set")
+	}
+
+	if env, ok := os.LookupEnv("STOMP_ADDR"); ok {
+		sCfg.serverAddr = env
+	} else {
+		log.Println("STOMP Server Addr is not set")
+		return errors.New("STOMP_ADDR is not set")
+	}
+
+	if env, ok := os.LookupEnv("STOMP_AGENT_QUEUE"); ok {
+		sCfg.agentQueue = env
+	} else {
+		log.Println("STOMP Agent Queue is not set")
+		return errors.New("STOMP_AGENT_QUEUE is not set")
+	}
+
+	if env, ok := os.LookupEnv("STOMP_CNTLR_QUEUE"); ok {
+		sCfg.controllerQueue = env
+	} else {
+		log.Println("STOMP Controller Queue is not set")
+		return errors.New("STOMP_CNTLR_QUEUE is not set")
+	}
+
+	if env, ok := os.LookupEnv("STOMP_USER"); ok {
+		sCfg.userName = env
+	} else {
+		log.Println("STOMP User Name is not set")
+		return errors.New("STOMP_USER is not set")
+	}
+
+	if env, ok := os.LookupEnv("STOMP_PASSWD"); ok {
+		sCfg.passwd = env
+	} else {
+		log.Println("STOMP Password is not set")
+	}
+
+	if env, ok := os.LookupEnv("STOMP_CONN_RETRY"); ok {
+		x, _ := strconv.ParseInt(env, 10, 0)
+		sCfg.retryCount = int(x)
+	} else {
+		log.Println("STOMP Connection retry count is not set, default is 5")
+		sCfg.retryCount = 5
+	}
+
+	log.Printf("STOMP Config params: %+v\n", sCfg)
+	return nil
+
 }
 
 func (s AgentStomp) SendMsg(msg []byte) error {
@@ -72,17 +138,23 @@ func connectHeaders() stompngo.Headers {
 	}
 	return h
 }
-func StompInit(cfg *StompCfg) (*Stomp, error) {
+func StompInit() (*Stomp, error) {
+
+	if err := loadStompConfigFromEnv(); err != nil {
+		log.Println("Error in loading STOMP config from Env")
+		return nil, err
+	}
+
 	var d net.Dialer
 	var ctx context.Context
 	var n net.Conn
 	var err error
-	for i := 0; i <= cfg.RetryCount; i++ {
+	for i := 0; i <= sCfg.retryCount; i++ {
 		ctx, _ = context.WithTimeout(context.Background(), time.Minute)
-		n, err = d.DialContext(ctx, "tcp", cfg.ServerAddr)
+		n, err = d.DialContext(ctx, "tcp", sCfg.serverAddr)
 		if err != nil {
-			if i < cfg.RetryCount {
-				log.Printf("Connection STOMP Server failed, retrying (%v of %v)\n", i, cfg.RetryCount)
+			if i < sCfg.retryCount {
+				log.Printf("Connection STOMP Server failed, retrying (%v of %v)\n", i, sCfg.retryCount)
 			} else {
 				log.Println("Connection to STOMP Server failed, exiting: ", err.Error())
 				return nil, err
@@ -101,15 +173,15 @@ func StompInit(cfg *StompCfg) (*Stomp, error) {
 	h1 := stompngo.Headers{}
 	//id := stompngo.Uuid()
 	//h1 = h.Add("id", id)
-	h1 = h.Add("destination", cfg.ControllerQueue)
+	h1 = h.Add("destination", sCfg.controllerQueue)
 	sub, err := conn.Subscribe(h1)
 	if err != nil {
-		log.Fatalf("Could not subscribe to: %v, Err: %v: ", cfg.ControllerQueue, err.Error())
+		log.Fatalf("Could not subscribe to: %v, Err: %v: ", sCfg.controllerQueue, err.Error())
 		h := stompngo.Headers{"noreceipt", "true"} // no receipt
 		conn.Disconnect(h)
 		return nil, err
 	}
-	log.Println("Subscribed to Rx Agent Queue: ", cfg.ControllerQueue)
+	log.Println("Subscribed to Rx Agent Queue: ", sCfg.controllerQueue)
 
 	s := &Stomp{}
 	s.Conn = conn

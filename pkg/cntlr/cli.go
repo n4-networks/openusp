@@ -18,8 +18,8 @@ var (
 
 func (c *Cntlr) Cli() {
 	shell := ishell.New()
-	shell.Println("N4 Cntlr Cli")
-	shell.SetPrompt("Cntlr>>")
+	shell.Println("OpenUSP Cntlr Cli")
+	shell.SetPrompt("OpenUSP Cntlr>>")
 
 	var ok bool
 	if cliAgentId, ok = os.LookupEnv("AGENT_ID"); ok {
@@ -211,7 +211,7 @@ func (c *Cntlr) cliSendGetProtoVersionMsg(cli *ishell.Context) {
 		return
 	}
 	msgId := "MTPCLI_GET_PROTO_VER_" + strconv.FormatUint(mtpIntf.GetMsgCnt(), 10)
-	uspMsg, err := parser.CreateUspGetSupportedProtoMsg(c.Cfg.Usp.ProtoVersion, msgId)
+	uspMsg, err := parser.CreateUspGetSupportedProtoMsg(c.cfg.usp.protoVersion, msgId)
 	if err != nil {
 		cli.Println("Could not prepare Usp msg of type: GET_PROTO_VERSION")
 		return

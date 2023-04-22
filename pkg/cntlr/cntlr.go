@@ -16,7 +16,7 @@ const (
 )
 
 type Cntlr struct {
-	Cfg    *Cfg
+	cfg    cntlrCfg
 	dbH    db.UspDb
 	mtpH   mtpHandler
 	cacheH cacheHandler
@@ -24,17 +24,15 @@ type Cntlr struct {
 	cntlrgrpc.UnimplementedGrpcServer
 }
 
-func (c *Cntlr) Init(confFile string) error {
+func (c *Cntlr) Init() error {
 
 	// Initialize Logger
 	log.SetPrefix("OpenUsp: ")
 	log.SetFlags(log.Lshortfile)
 
-	var err error
-
-	// Read configuration from yaml file
-	err = c.config(confFile)
-	if err != nil {
+	// Load config from env
+	if err := c.loadConfigFromEnv(); err != nil {
+		log.Println("Error in loading controller config")
 		return err
 	}
 
@@ -73,7 +71,7 @@ func (c *Cntlr) Run() (chan int32, error) {
 
 	c.MtpStart()
 
-	go c.GrpcServerThread(c.Cfg.Grpc.Port, exit)
+	go c.GrpcServerThread(c.cfg.grpc.port, exit)
 
 	go c.MtpReceiveThread()
 

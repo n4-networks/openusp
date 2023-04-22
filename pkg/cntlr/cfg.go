@@ -1,12 +1,10 @@
 package cntlr
 
 import (
-	"errors"
-	"io/ioutil"
 	"log"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -16,85 +14,59 @@ const (
 	SERVER_MODE_NORMAL_AND_TLS
 )
 
-type GrpcCfg struct {
-	Port string `yaml:"port"`
+type grpcCfg struct {
+	port string
 }
 
-type CacheCfg struct {
-	ServerAddr string `yaml:"serverAddr"`
+type cacheCfg struct {
+	serverAddr string
 }
 
-type DbCfg struct {
-	ServerAddr string `yaml:"serverAddr"`
-	Name       string `yaml:"name"`
-	UserName   string `yaml:"userName"`
-	Passwd     string `yaml:"passwd"`
+type uspCfg struct {
+	endpointId   string
+	protoVersion string
 }
 
-type UspCfg struct {
-	EndpointId   string `yaml:"endpointId"`
-	ProtoVersion string `yaml:"protoVersion"`
+type cntlrCfg struct {
+	cache cacheCfg
+	grpc  grpcCfg
+	usp   uspCfg
 }
 
-type Cfg struct {
-	Mtp   MtpCfg   `yaml:"mtp"`
-	Cache CacheCfg `yaml:"cache"`
-	Grpc  GrpcCfg  `yaml:"grpc"`
-	Usp   UspCfg   `yaml:"usp"`
-	Db    DbCfg    `yaml:"db"`
-}
+func (c *Cntlr) loadConfigFromEnv() error {
 
-func (c *Cntlr) config(confFile string) error {
-
-	f, err := ioutil.ReadFile(confFile)
-	if err != nil {
-		log.Fatal("Could not open the conf file, going with default, error: ", err)
+	if err := godotenv.Load(); err != nil {
+		log.Println("Error in loading .env file")
 		return err
 	}
-	cfg := &Cfg{}
-	if err := yaml.Unmarshal(f, cfg); err != nil {
-		log.Fatal("Could not read conf parameters, error: ", err)
-		return err
-	}
-	/*
-		log.Printf("HTTP Configuration\n")
-		log.Printf("%+v\n", cfg.Http)
-		log.Printf("CoAP Configuration\n")
-		log.Printf("%+v\n", cfg.CoAP)
-		log.Printf("STOMP Configuration\n")
-		log.Printf("%+v\n", C.Cfg.Usp.EndpointId)
-	*/
-	if db, ok := os.LookupEnv("DB_ADDR"); ok {
-		cfg.Db.ServerAddr = db
-	}
 
-	if dbUser, ok := os.LookupEnv("DB_USER"); ok {
-		cfg.Db.UserName = dbUser
+	// Cache config
+	if env, ok := os.LookupEnv("CACHE_ADDR"); ok {
+		c.cfg.cache.serverAddr = env
 	} else {
-		log.Println("DB User name is not set")
-		return errors.New("DB_USER is not set")
+		log.Println("Cache Server Address is not set")
 	}
 
-	if dbPasswd, ok := os.LookupEnv("DB_PASSWD"); ok {
-		cfg.Db.Passwd = dbPasswd
+	// Controller gRPC config
+	if env, ok := os.LookupEnv("CNTLR_GRPC_PORT"); ok {
+		c.cfg.grpc.port = env
 	} else {
-		log.Println("DB User password is not set")
-		return errors.New("DB_PASSWD is not set")
-	}
-	log.Printf("%+v\n", cfg.Db)
-
-	if stomp, ok := os.LookupEnv("STOMP_ADDR"); ok {
-		cfg.Mtp.Stomp.ServerAddr = stomp
+		log.Println("CNTRL gRPC Server Port is not set")
 	}
 
-	if mqttBroker, ok := os.LookupEnv("MQTT_ADDR"); ok {
-		cfg.Mtp.Mqtt.BrokerAddr = mqttBroker
+	// Controller USP config
+	if env, ok := os.LookupEnv("CNTLR_EPID"); ok {
+		c.cfg.usp.endpointId = env
+	} else {
+		log.Println("CNTLR Entpoint ID is not set")
+	}
+	if env, ok := os.LookupEnv("CNTLR_USP_PROTO_VERSION"); ok {
+		c.cfg.usp.protoVersion = env
+	} else {
+		log.Println("CNTLR USP Protocol Version is not set")
 	}
 
-	if cache, ok := os.LookupEnv("CACHE_ADDR"); ok {
-		cfg.Cache.ServerAddr = cache
-	}
+	log.Printf("CNTLR Config params: %+v\n", c.cfg)
 
-	c.Cfg = cfg
 	return nil
 }

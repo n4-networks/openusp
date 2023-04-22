@@ -20,15 +20,14 @@ func (as *ApiServer) connectDb() error {
 		ctx, _ := context.WithTimeout(context.Background(), as.cfg.connTimeout)
 		as.dbH.client.Disconnect(ctx)
 	}
-	/* Connect to DB */
-	//log.Println("Connecting to Database @", as.cfg.dbAddr)
-	dbClient, err := db.Connect(as.cfg.dbAddr, as.cfg.dbUserName, as.cfg.dbPasswd, as.cfg.connTimeout)
+	// Connect to DB
+	dbClient, err := db.Connect()
 	if err != nil {
 		return err
 	}
 	/* Initialize USP collection connection */
 	usp := &db.UspDb{}
-	if err := usp.Init(dbClient, "usp"); err != nil {
+	if err := usp.Init(dbClient); err != nil {
 		return err
 	}
 	as.dbH.client = dbClient

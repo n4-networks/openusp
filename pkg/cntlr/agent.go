@@ -100,7 +100,7 @@ func (c *Cntlr) agentInitThread(initData *agentInitData) {
 }
 
 func (c *Cntlr) sendUspMsgToAgent(agentId string, uspMsg []byte, mtpIntf agentMtpIntf) error {
-	controllerId := c.Cfg.Usp.EndpointId
+	controllerId := c.cfg.usp.endpointId
 	uspRecord, err := parser.CreateNewPlainTextRecord(&agentId, &controllerId, nil, nil, uspMsg)
 	if err != nil {
 		log.Println("Could not convert USP msg to USP record: ", err)

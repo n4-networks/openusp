@@ -2,7 +2,6 @@ package cntlr
 
 import (
 	"log"
-	"time"
 
 	"github.com/n4-networks/openusp/pkg/db"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -10,11 +9,11 @@ import (
 
 func (c *Cntlr) dbInit() error {
 	var dbClient *mongo.Client
-	dbClient, err := db.Connect(c.Cfg.Db.ServerAddr, c.Cfg.Db.UserName, c.Cfg.Db.Passwd, 3*time.Minute)
+	dbClient, err := db.Connect()
 	if err != nil {
 		return err
 	}
-	err = c.dbH.Init(dbClient, "usp")
+	err = c.dbH.Init(dbClient)
 	if err != nil {
 		return err
 	}

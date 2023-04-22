@@ -1,29 +1,77 @@
 package mtp
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/joho/godotenv"
 )
 
 type Mqtt struct {
 	Client mqtt.Client
 }
 
-type MqttCfg struct {
-	Mode       string `yaml:"mode"`
-	BrokerAddr string `yaml:"brokerAddr"`
-	Topic      string `yaml:"topic"`
-	UserName   string `yaml:"userName"`
-	Passwd     string `yaml:"passwd"`
+type mqttCfg struct {
+	mode       string
+	serverAddr string
+	topic      string
+	userName   string
+	passwd     string
 }
+
+var mCfg mqttCfg
 
 type agentMqtt struct {
 	client mqtt.Client
 	topic  string
 	msgCnt uint64
+}
+
+func loadMqttConfigFromEnv() error {
+
+	if err := godotenv.Load(); err != nil {
+		log.Println("Error in loading .env file")
+		return err
+	}
+
+	if env, ok := os.LookupEnv("MQTT_MODE"); ok {
+		mCfg.mode = env
+	} else {
+		log.Println("MQTT mode is not set")
+	}
+
+	if env, ok := os.LookupEnv("MQTT_ADDR"); ok {
+		mCfg.serverAddr = env
+	} else {
+		log.Println("MQTT Server Addr is not set")
+		return errors.New("MQTT is not set")
+	}
+
+	if env, ok := os.LookupEnv("MQTT_TOPIC"); ok {
+		mCfg.topic = env
+	} else {
+		log.Println("MQTT Queue is not set")
+		return errors.New("MQTT_QUEUE is not set")
+	}
+
+	if env, ok := os.LookupEnv("MQTT_USER"); ok {
+		mCfg.userName = env
+	} else {
+		log.Println("MQTT User Name is not set")
+		return errors.New("MQTT_USER is not set")
+	}
+
+	if env, ok := os.LookupEnv("MQTT_PASSWD"); ok {
+		mCfg.passwd = env
+	} else {
+		log.Println("MQTT Password is not set")
+	}
+	log.Printf("STOMP Config params: %+v\n", mCfg)
+	return nil
 }
 
 func (s agentMqtt) sendMsg(msg []byte) error {
@@ -51,10 +99,15 @@ var subcribeHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Mess
 	fmt.Printf("inside of sub MSG: %s\n", msg.Payload())
 }
 
-func MqttInit(cfg *MqttCfg) (mqtt.Client, error) {
+func MqttInit() (mqtt.Client, error) {
+
+	if err := loadMqttConfigFromEnv(); err != nil {
+		log.Println("Error in loading MQTT config from Env")
+		return nil, err
+	}
 	//mqtt.DEBUG = log.New(os.Stdout, "", 0)
 	//mqtt.ERROR = log.New(os.Stdout, "", 0)
-	opts := mqtt.NewClientOptions().AddBroker("tcp://" + cfg.BrokerAddr).SetClientID("gotrivial")
+	opts := mqtt.NewClientOptions().AddBroker("tcp://" + mCfg.serverAddr).SetClientID("gotrivial")
 	opts.SetKeepAlive(2 * time.Second)
 	opts.SetDefaultPublishHandler(publishHandler)
 	opts.SetPingTimeout(1 * time.Second)
@@ -62,15 +115,15 @@ func MqttInit(cfg *MqttCfg) (mqtt.Client, error) {
 	return mc, nil
 }
 
-func MqttStart(mc mqtt.Client, topic string) error {
+func MqttStart(mc mqtt.Client) error {
 	if token := mc.Connect(); token.Wait() && token.Error() != nil {
 		log.Println("Mqtt Connect Error:", token.Error())
 		return token.Error()
 	}
 
 	var rxMsgHandler mqtt.MessageHandler = mqttRxMsgHandler
-	log.Println("MQTT subscribing to topic:", topic)
-	if token := mc.Subscribe(topic, 0, rxMsgHandler); token.Wait() && token.Error() != nil {
+	log.Println("MQTT subscribing to topic:", mCfg.topic)
+	if token := mc.Subscribe(mCfg.topic, 0, rxMsgHandler); token.Wait() && token.Error() != nil {
 		log.Println(token.Error())
 		return token.Error()
 	}

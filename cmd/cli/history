@@ -36,3 +36,11 @@ help
 show 
 show agent
 exit
+show agent
+exit
+help
+show agent
+showcfg
+show help
+show agent cli-id
+exit

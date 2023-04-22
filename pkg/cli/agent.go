@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"log"
-	"os"
 
 	"github.com/abiosoft/ishell"
 )
@@ -201,14 +200,8 @@ func (cli *Cli) unsetAgent(c *ishell.Context) {
 
 func (cli *Cli) initCliWithAgentParams() error {
 	cli.agent.isSet.epId = false
-	if epId, ok := os.LookupEnv("AGENT_ID"); !ok {
-		log.Println("Please provide agent id either through env (AGENT_ID) or use set agentid command to set")
-		return errors.New("Agent ID not found in env")
-	} else {
-		log.Println("Setting agent id to:", epId)
-		cli.agent.epId = epId
-		cli.agent.isSet.epId = true
-	}
+	cli.agent.epId = cli.cfg.agentId
+	cli.agent.isSet.epId = true
 	if err := cli.initCliWithAgentFactoryData(); err != nil {
 		return err
 	}

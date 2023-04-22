@@ -51,12 +51,12 @@ func (c *Cntlr) parseUspRecord(s []byte) (*uspRecordData, error) {
 	return rData, nil
 }
 func (c *Cntlr) validateUspRecord(rData *uspRecordData) error {
-	if rData.version != c.Cfg.Usp.ProtoVersion {
-		log.Printf("Wrong USP Rx Version: %v, supproted Ver: ", rData.version, c.Cfg.Usp.ProtoVersion)
+	if rData.version != c.cfg.usp.protoVersion {
+		log.Printf("Wrong USP Rx Version: %v, supproted Ver: ", rData.version, c.cfg.usp.protoVersion)
 		return errors.New("USP version mismatch")
 	}
-	if rData.toId != c.Cfg.Usp.EndpointId {
-		log.Printf("Wrong USP Rx ToId: %v, controller Id: %v", rData.toId, c.Cfg.Usp.EndpointId)
+	if rData.toId != c.cfg.usp.endpointId {
+		log.Printf("Wrong USP Rx ToId: %v, controller Id: %v", rData.toId, c.cfg.usp.endpointId)
 		return errors.New("USP ToId/Controller id mismatch")
 	}
 	log.Printf("Record: USP version: %v, toId: %v", rData.version, rData.toId)
