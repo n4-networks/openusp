@@ -13,12 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# Controller
-docker run --env-file configs/openusp.env n4networks/openusp-controller
-
-# ApiServer
-docker run --env-file configs/openusp.env n4networks/openusp-apiserver
-
 # Cli
-docker run --env-file configs/openusp.env --network=openusp -it n4networks/openusp-cli
+docker run --env-file configs/openusp.env --network=openusp -it n4networks/openusp-cli "sleep infinity"

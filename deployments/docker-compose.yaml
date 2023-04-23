@@ -71,19 +71,21 @@ services:
     networks:
       openusp:
         ipv4_address: 10.5.0.6
-  openusp-cli:
-    build:
-      context: ..
-      dockerfile: ./build/cli/Dockerfile
-    image: n4networks/openusp-cli:latest
-    container_name: openusp-cli
-    env_file:
-      - ../configs/openusp.env
-    stdin_open: true
-    tty: true
-    networks:
-      openusp:
-        ipv4_address: 10.5.0.7
+# The following container is to be created in interactive mode using docker run: ./scripts/docker/cli.sh
+  #openusp-cli:
+  #build:
+  #context: ..
+  #dockerfile: ./build/cli/Dockerfile
+  #image: n4networks/openusp-cli:latest
+  #  container_name: openusp-cli
+  #  env_file:
+  #    - ../configs/openusp.env
+  #  stdin_open: true
+  #  tty: true
+  #  command: ["sleep infinity"]
+  #  networks:
+  #    openusp:
+  #      ipv4_address: 10.5.0.7
 
 volumes:
   mongodb_data_container:
