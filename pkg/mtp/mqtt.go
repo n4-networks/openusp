@@ -47,7 +47,7 @@ type agentMqtt struct {
 
 func loadMqttConfigFromEnv() error {
 
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Println("Error in loading .env file")
 		return err
 	}

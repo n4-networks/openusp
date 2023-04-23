@@ -150,7 +150,7 @@ func (cli *Cli) Run() {
 
 func (cli *Cli) loadConfigFromEnv() error {
 
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Println("Error in loading .env file")
 		return err
 	}

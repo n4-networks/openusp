@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright 2023 N4-Networks.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,11 @@
 # limitations under the License.
 
 
-## External Server addresses
-DB_SERVER_ADDR="10.5.0.2:27017"
-MTP_SERVER_ADDR=":9001"
+# Controller
+docker build -t n4networks/openusp-controller -f build/controller/Dockerfile .
 
-## REST configuration
-SERVER_BIN=apiserver
-SERVER_PORT=8081
-DB_USERNAME=admin
-DB_PASSWD=admin
-LOGGING=all
+# ApiServer
+docker build -t n4networks/openusp-apiserver -f build/apiserver/Dockerfile .
 
-
-ENV="HTTP_PORT=$SERVER_PORT MTP_GRPC_ADDR=$MTP_SERVER_ADDR DB_ADDR=$DB_SERVER_ADDR DB_USER=$DB_USERNAME DB_PASSWD=$DB_PASSWD LOGGING=$LOGGING"
-
-ENV_TLS=$ENV HTTP_TLS=1
-
-#echo "$ENV ./$SERVER_BIN"
-eval "$ENV ./$SERVER_BIN"
-
+# Cli
+docker build -t n4networks/openusp-cli -f build/cli/Dockerfile .

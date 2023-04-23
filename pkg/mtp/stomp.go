@@ -54,7 +54,7 @@ type AgentStomp struct {
 
 func loadStompConfigFromEnv() error {
 
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Println("Error in loading .env file")
 		return err
 	}

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright 2023 N4-Networks.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,8 @@
 # limitations under the License.
 
 
-#ACTIVEMQ=172.21.0.3:61613
-ACTIVEMQ=10.5.0.3:61613
-MONGO=10.5.0.2:27017
-REDIS=10.5.0.4:6379
-MQTT=10.5.0.3:1883
-DBUSER=admin
-DBPASSWD=admin
-AGENT=os::012345-525400C8712E
-LOGGING=all
-
-AGENT_ID=$AGENT STOMP_ADDR=$ACTIVEMQ MQTT_ADDR=$MQTT DB_ADDR=$MONGO DB_USER=$DBUSER DB_PASSWD=$DBPASSWD CACHE_ADDR=$REDIS ./controller -c
-
+docker compose -f deployments/docker-compose.yaml build
+docker compose -f deployments/docker-compose.yaml up -d
+docker compose -f deployments/docker-compose.yaml ps
+docker compose -f deployments/docker-compose.yaml stop
+docker compose -f deployments/docker-compose.yaml exec openusp-cli bash

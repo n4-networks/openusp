@@ -45,6 +45,45 @@ services:
     networks:
       openusp:
         ipv4_address: 10.5.0.4
+  openusp-controller:
+    build:
+      context: ..
+      dockerfile: ./build/controller/Dockerfile
+    image: n4networks/openusp-controller:latest
+    container_name: openusp-controller
+    env_file:
+      - ../configs/openusp.env
+    ports:
+      - 9001:9001
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.5
+  openusp-apiserver:
+    build:
+      context: ..
+      dockerfile: ./build/apiserver/Dockerfile
+    image: n4networks/openusp-apiserver:latest
+    container_name: openusp-apiserver
+    env_file:
+      - ../configs/openusp.env
+    ports:
+      - 8081:8081
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.6
+  openusp-cli:
+    build:
+      context: ..
+      dockerfile: ./build/cli/Dockerfile
+    image: n4networks/openusp-cli:latest
+    container_name: openusp-cli
+    env_file:
+      - ../configs/openusp.env
+    stdin_open: true
+    tty: true
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.7
 
 volumes:
   mongodb_data_container:

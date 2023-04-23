@@ -44,3 +44,21 @@ showcfg
 show help
 show agent cli-id
 exit
+ls
+exit
+show
+show agent
+show wifi
+show help
+show stomp
+show time
+show eth
+show dm
+show devinfo
+show ip
+show help
+show history settings
+show mtp
+show nw wired
+show version
+exit
