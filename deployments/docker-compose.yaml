@@ -11,12 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#      test: echo 'db.stats().ok' | mongo localhost:27017/test
 
 version: '3.7'
 services:
   openusp-db:
     image: mongo:latest
     container_name: openusp-db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test
+      interval: 10s
+      timeout: 10s
+      retries: 5
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -51,6 +57,9 @@ services:
       dockerfile: ./build/controller/Dockerfile
     image: n4networks/openusp-controller:latest
     container_name: openusp-controller
+    depends_on:
+      openusp-db:
+        condition: service_healthy
     env_file:
       - ../configs/openusp.env
     ports:
@@ -64,6 +73,11 @@ services:
       dockerfile: ./build/apiserver/Dockerfile
     image: n4networks/openusp-apiserver:latest
     container_name: openusp-apiserver
+    depends_on:
+       openusp-db:
+         condition: service_healthy
+       openusp-controller:
+         condition: service_started
     env_file:
       - ../configs/openusp.env
     ports:
