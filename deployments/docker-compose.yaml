@@ -85,6 +85,16 @@ services:
     networks:
       openusp:
         ipv4_address: 10.5.0.6
+  openusp-agent:
+    image: n4networks/openusp-agent:latest
+    container_name: openusp-agent
+    depends_on:
+       openusp-broker:
+         condition: service_started
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.7
+# The following container is to be created in interactive mode using docker run: ./scripts/docker/cli.sh
 # The following container is to be created in interactive mode using docker run: ./scripts/docker/cli.sh
   #openusp-cli:
   #build:
