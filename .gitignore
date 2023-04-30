@@ -6,9 +6,9 @@
 *.dylib
 *.csr
 *.key
-controller
-apiserver
-cli
+cmd/controller/controller
+cmd/apiserver/apiserver
+cmd/cli/cli
 history
 
 # Test binary, built with `go test -c`
