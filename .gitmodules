@@ -1,0 +1,3 @@
+[submodule "obuspa"]
+	path = obuspa
+	url = git@github.com:BroadbandForum/obuspa.git
