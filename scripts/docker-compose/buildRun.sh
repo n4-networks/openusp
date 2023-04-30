@@ -18,4 +18,5 @@ docker compose -f deployments/docker-compose.yaml build
 docker compose -f deployments/docker-compose.yaml up -d
 docker compose -f deployments/docker-compose.yaml ps
 docker compose -f deployments/docker-compose.yaml stop
-docker compose -f deployments/docker-compose.yaml exec openusp-cli bash
+docker compose -f deployments/docker-compose.yaml logs openusp-controller
+docker compose -f deployments/docker-compose.yaml run --rm openusp-cli

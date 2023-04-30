@@ -100,7 +100,7 @@ services:
 # The following container is to be created in interactive mode using docker run: ./scripts/docker/cli.sh
   openusp-cli:
     profiles:
-      - donotstart
+      - iterative
     build:
       context: ..
       dockerfile: ./build/cli/Dockerfile
