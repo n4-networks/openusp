@@ -62,3 +62,13 @@ show mtp
 show nw wired
 show version
 exit
+help
+exit
+help
+show agent
+show agent help
+show agent all-ids
+show agent cli-id
+show help
+show agent mtp
+exit
