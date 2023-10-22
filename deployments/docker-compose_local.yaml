@@ -1,0 +1,130 @@
+# Copyright 2023 N4-Networks.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#      test: echo 'db.stats().ok' | mongo localhost:27017/test
+#  openusp-db:
+#    image: arm64v8/mongo
+
+version: '3.7'
+services:
+  openusp-db:
+    image: mongo
+    container_name: openusp-db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.2
+  openusp-broker:
+    image: rmohr/activemq:latest
+    container_name: openusp-broker
+    ports:
+      - 61616:61616
+      - 8161:8161
+      - 1883:1883
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.3
+  openusp-cache:
+    image: redis:latest
+    container_name: openusp-cache
+    ports:
+      - 6379:6379
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.4
+  openusp-controller:
+    build:
+      context: ..
+      dockerfile: ./build/controller/Dockerfile
+    image: n4networks/openusp-controller:local
+    container_name: openusp-controller
+    depends_on:
+      openusp-db:
+        condition: service_healthy
+    env_file:
+      - ../configs/openusp.env
+    ports:
+      - 9001:9001
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.5
+  openusp-apiserver:
+    build:
+      context: ..
+      dockerfile: ./build/apiserver/Dockerfile
+    image: n4networks/openusp-apiserver:local
+    container_name: openusp-apiserver
+    depends_on:
+       openusp-db:
+         condition: service_healthy
+       openusp-controller:
+         condition: service_started
+    env_file:
+      - ../configs/openusp.env
+    ports:
+      - 8081:8081
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.6
+  openusp-agent:
+    build:
+      context: ..
+      dockerfile: ./build/obuspa/Dockerfile
+    image: n4networks/openusp-agent:latest
+    container_name: openusp-agent
+    depends_on:
+       openusp-broker:
+         condition: service_started
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.7
+# The following container is to be created in interactive mode using docker run: ./scripts/docker/cli.sh
+  openusp-cli:
+    profiles:
+      - iterative
+    build:
+      context: ..
+      dockerfile: ./build/cli/Dockerfile
+    image: n4networks/openusp-cli:local
+    container_name: openusp-cli
+    env_file:
+      - ../configs/openusp.env
+    stdin_open: true
+    tty: true
+    networks:
+      openusp:
+        ipv4_address: 10.5.0.8
+#command: ["sleep infinity"]
+
+volumes:
+  mongodb_data_container:
+
+networks:
+  openusp:
+    name: openusp
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1

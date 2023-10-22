@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/n4-networks/openusp/pkg/db"
 	"github.com/n4-networks/openusp/pkg/pb/cntlrgrpc"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -103,6 +104,11 @@ func (as *ApiServer) Init() error {
 
 func (as *ApiServer) config() error {
 
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		log.Println("Error in loading .env file")
+		return err
+	}
+
 	if httpPort, ok := os.LookupEnv("HTTP_PORT"); ok {
 		as.cfg.httpPort = httpPort
 	} else {
@@ -135,6 +141,18 @@ func (as *ApiServer) config() error {
 		log.Println("DB_PASSWD is not set")
 		return errors.New("DB_PASSWD not set")
 	}
+
+	var authName, authPasswd string
+	if authName, ok = os.LookupEnv("API_SERVER_AUTH_NAME"); !ok {
+		log.Println("API_SERVER_AUTH_NAME is not set")
+		return errors.New("API_SERVER_AUTH_NAME not set")
+	}
+
+	if authPasswd, ok = os.LookupEnv("API_SERVER_AUTH_PASSWD"); !ok {
+		log.Println("API_SERVER_AUTH_PASSWD is not set")
+		return errors.New("API_SERVER_AUTH_PASSWD not set")
+	}
+	users[authName] = authPasswd
 
 	if cntlrGrpcAddr, ok := os.LookupEnv("CNTLR_GRPC_ADDR"); ok {
 		as.cfg.cntlrAddr = cntlrGrpcAddr
