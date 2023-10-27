@@ -1,3 +1,6 @@
+![CI Build Status]
+(https://github.com/n4-networks/openusp/actions/workflows/build.yml/badge.svg)
+
 # Summary 
 Open source implementation of USP (User Services Platform) controller based on Broadband Forum's [USP](https://usp.technology) Specification.
 
