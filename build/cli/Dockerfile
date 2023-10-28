@@ -17,6 +17,10 @@
 # Build the application from source
 FROM --platform=$BUILDPLATFORM golang:1.21 AS build-stage
 
+ARG TARGETOS TARGETARCH
+ENV GOOS $TARGETOS
+ENV GOARCH $TARGETARCH
+
 # Set destination for COPY
 WORKDIR /app
 

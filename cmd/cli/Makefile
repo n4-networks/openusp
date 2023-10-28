@@ -1,6 +1,6 @@
 BIN=cli
 
-BUILDFLAGS=CGO_ENABLED=0 GOOS=linux 
+BUILDFLAGS=CGO_ENABLED=0
 LDFLAGS=-ldflags "-X github.com/n4-networks/openusp/pkg/cli.buildtime=`date +%Y-%m-%d.%H:%M:%S`"
 
 build: *.go
