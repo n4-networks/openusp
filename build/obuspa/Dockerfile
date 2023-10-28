@@ -15,10 +15,14 @@
 # 2) Create the OB-USP-A image, then build the application
 # > docker build -f Dockerfile -t obuspa:latest --target runner .
 #
-FROM ubuntu:kinetic AS build-env
+FROM --platform=$BUILDPLATFORM ubuntu AS build-env
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN echo "Running on $BUILDPLATFORM and building for $TARGETPLATFORM" > /log
 
 # Install dependencies
-RUN apt-get update && apt-get -y install \
+RUN apt update && apt -y install \
+        build-essential \
         libssl-dev \
         libcurl4-openssl-dev\
         libsqlite3-dev \
@@ -27,16 +31,29 @@ RUN apt-get update && apt-get -y install \
         automake \
         libtool \
         libmosquitto-dev \
-        libwebsockets-dev \
         pkg-config \
+        git \
+        cmake \
         make \
-    && apt-get clean
+    && apt clean
+
+RUN mkdir -p /usr/local/src
+WORKDIR /usr/local/src/
+RUN git clone https://github.com/warmcat/libwebsockets.git libwebsockets
+WORKDIR /usr/local/src/libwebsockets
+RUN mkdir build
+WORKDIR /usr/local/src/libwebsockets/build
+
+RUN cmake ..
+RUN make && make install
+# install libs in /usr/local/lib ; configured in /etc/ld.so.conf.d/libc.conf
+# ENV LD_LIBRARY_PATH /usr/local/lib:${LD_LIBRARY_PATH}
+RUN ldconfig -v
 
 FROM build-env AS runner
 
 ENV MAKE_JOBS=8
 ENV OBUSPA_ARGS="-p -v 4 -r /etc/factory_reset_example.txt"
-#./obuspa -p -v 4 -r factory_reset_example.txt -i enp1s0 --dbfile ./tmp/usp.db
 
 # Copy in all of the code
 # Then compile, as root.

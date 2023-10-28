@@ -36,7 +36,7 @@ services:
       openusp:
         ipv4_address: 10.5.0.2
   openusp-broker:
-    image: rmohr/activemq:latest
+    image: islandora/activemq:mariadb_max_packet
     container_name: openusp-broker
     ports:
       - 61616:61616
@@ -91,7 +91,7 @@ services:
     build:
       context: ..
       dockerfile: ./build/obuspa/Dockerfile
-    image: n4networks/openusp-agent:latest
+    image: n4networks/openusp-agent:local
     container_name: openusp-agent
     depends_on:
        openusp-broker:

@@ -15,10 +15,13 @@
 
 
 # Controller
-docker build -t n4networks/openusp-controller -f build/controller/Dockerfile .
+docker buildx build -t n4networks/openusp-controller:latest -f build/controller/Dockerfile --push --platform=linux/amd64,linux/arm64 .
 
 # ApiServer
-docker build -t n4networks/openusp-apiserver -f build/apiserver/Dockerfile .
+docker buildx build -t n4networks/openusp-apiserver:latest -f build/apiserver/Dockerfile --push --platform=linux/amd64,linux/arm64 .
 
 # Cli
-docker build -t n4networks/openusp-cli -f build/cli/Dockerfile .
+docker buildx build -t n4networks/openusp-cli:latest -f build/cli/Dockerfile --push --platform=linux/amd64,linux/arm64 .
+
+# OBUSPA
+docker buildx build -t n4networks/openusp-agent:latest -f build/obuspa/Dockerfile --push --platform=linux/amd64,linux/arm64 .

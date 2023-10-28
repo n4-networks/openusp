@@ -34,7 +34,7 @@ services:
       openusp:
         ipv4_address: 10.5.0.2
   openusp-broker:
-    image: rmohr/activemq:latest
+    image: islandora/activemq:mariadb_max_packet
     container_name: openusp-broker
     ports:
       - 61616:61616

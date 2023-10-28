@@ -15,7 +15,7 @@
 
 
 # Build the application from source
-FROM golang:1.19 AS build-stage
+FROM --platform=$BUILDPLATFORM golang:1.21 AS build-stage
 
 # Set destination for COPY
 WORKDIR /app
