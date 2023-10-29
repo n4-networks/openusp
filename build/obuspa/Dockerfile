@@ -15,7 +15,8 @@
 # 2) Create the OB-USP-A image, then build the application
 # > docker build -f Dockerfile -t obuspa:latest --target runner .
 #
-FROM --platform=$BUILDPLATFORM ubuntu AS build-env
+#FROM --platform=$BUILDPLATFORM ubuntu AS build-env
+FROM ubuntu AS build-env
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 RUN echo "Running on $BUILDPLATFORM and building for $TARGETPLATFORM" > /log
