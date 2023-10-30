@@ -19,6 +19,8 @@ FROM --platform=$BUILDPLATFORM golang:1.21 AS build-stage
 
 ARG TARGETOS TARGETARCH
 ENV GOOS $TARGETOS
+
+# Pass TARGETART as GOARCH env flag for go cross compilation
 ENV GOARCH $TARGETARCH
 
 # Set destination for COPY
@@ -32,7 +34,7 @@ COPY pkg ./pkg
 COPY cmd ./cmd
 COPY Makefile ./
 
-RUN make build
+RUN make apiserver
 
 # Run the tests in the container
 #FROM build-stage AS run-test-stage

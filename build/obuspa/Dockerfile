@@ -17,9 +17,6 @@
 #
 #FROM --platform=$BUILDPLATFORM ubuntu AS build-env
 FROM ubuntu AS build-env
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
-RUN echo "Running on $BUILDPLATFORM and building for $TARGETPLATFORM" > /log
 
 # Install dependencies
 RUN apt update && apt -y install \
@@ -42,33 +39,35 @@ RUN mkdir -p /usr/local/src
 WORKDIR /usr/local/src/
 RUN git clone https://github.com/warmcat/libwebsockets.git libwebsockets
 WORKDIR /usr/local/src/libwebsockets
-RUN mkdir build
-WORKDIR /usr/local/src/libwebsockets/build
-
-RUN cmake ..
-RUN make && make install
+RUN cmake -B build -S .
+RUN cd build && make && make install
 # install libs in /usr/local/lib ; configured in /etc/ld.so.conf.d/libc.conf
 # ENV LD_LIBRARY_PATH /usr/local/lib:${LD_LIBRARY_PATH}
 RUN ldconfig -v
 
-FROM build-env AS runner
-
 ENV MAKE_JOBS=8
-ENV OBUSPA_ARGS="-p -v 4 -r /etc/factory_reset_example.txt"
 
-# Copy in all of the code
-# Then compile, as root.
 COPY ./obuspa /obuspa/
-COPY ./configs/obuspa/factory_reset_example.txt /etc
 RUN cd /obuspa/ && \
     autoreconf -fi && \
     ./configure && \
     make -j${MAKE_JOBS} && \
     make install
 
-# Then delete the code
-# that's no longer needed
-RUN rm -rf /obuspa
+FROM debian:stable AS build-release-stage
+RUN apt update && apt -y install \
+    libssl-dev \
+    libsqlite3-dev \
+    libcurl4-openssl-dev\
+    libmosquitto-dev
+
+WORKDIR /
+COPY --from=build-env /usr/local/lib/libwebsockets.* /usr/local/lib
+COPY --from=build-env /obuspa/obuspa /bin
+COPY ./configs/obuspa/factory_reset_example.txt /etc
+RUN ldconfig -v
+
+ENV OBUSPA_ARGS="-p -v 4 -r /etc/factory_reset_example.txt --dbfile /tmp/sqldb"
 
 # Run obuspa with args expanded
 CMD obuspa ${OBUSPA_ARGS}

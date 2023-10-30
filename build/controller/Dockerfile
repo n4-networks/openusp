@@ -32,7 +32,7 @@ COPY pkg ./pkg
 COPY cmd ./cmd
 COPY Makefile ./
 
-RUN make build 
+RUN make controller
 
 # Run the tests in the container
 #FROM build-stage AS run-test-stage
@@ -45,9 +45,5 @@ FROM debian:stable AS build-release-stage
 WORKDIR /
 
 COPY --from=build-stage /app/cmd/controller/controller /controller
-
-#EXPOSE 8080
-
-#USER nonroot:nonroot
 
 ENTRYPOINT ["/controller"]
