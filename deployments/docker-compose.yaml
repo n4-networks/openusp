@@ -37,6 +37,8 @@ services:
     image: islandora/activemq:mariadb_max_packet
     container_name: openusp-broker
     ports:
+      - 61613:61613
+      - 61614:61614
       - 61616:61616
       - 8161:8161
       - 1883:1883
