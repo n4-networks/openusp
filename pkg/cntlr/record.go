@@ -29,6 +29,7 @@ type uspRecordData struct {
 	fromId     string
 	toId       string
 	recordType string
+	destQueue  string
 }
 
 func (c *Cntlr) parseUspRecord(s []byte) (*uspRecordData, error) {
@@ -44,7 +45,10 @@ func (c *Cntlr) parseUspRecord(s []byte) (*uspRecordData, error) {
 	rData.fromId = r.GetFromId()
 	switch r.RecordType.(type) {
 	case *usp_record.Record_StompConnect:
+		sc := r.GetStompConnect()
 		log.Println("Record Type:", r.GetStompConnect())
+		rData.destQueue = sc.GetSubscribedDestination()
+		log.Println("Subscribed Destination:", sc.GetSubscribedDestination())
 		rData.recordType = "STOMP_CONNECT"
 	default:
 		log.Println("Invalid record type")
@@ -65,15 +69,17 @@ func (c *Cntlr) parseUspRecord(s []byte) (*uspRecordData, error) {
 	return rData, nil
 }
 func (c *Cntlr) validateUspRecord(rData *uspRecordData) error {
-	if rData.version != c.cfg.usp.protoVersion {
-		log.Printf("Wrong USP Rx Version: %v, supproted Ver: ", rData.version, c.cfg.usp.protoVersion)
-		return errors.New("USP version mismatch")
+	if c.cfg.usp.protoVersionCheck {
+		if rData.version != c.cfg.usp.protoVersion {
+			log.Printf("Wrong USP Rx Version: %v, supproted Ver: %v", rData.version, c.cfg.usp.protoVersion)
+			return errors.New("USP version mismatch")
+		}
 	}
 	if rData.toId != c.cfg.usp.endpointId {
 		log.Printf("Wrong USP Rx ToId: %v, controller Id: %v", rData.toId, c.cfg.usp.endpointId)
 		return errors.New("USP ToId/Controller id mismatch")
 	}
-	log.Printf("Record: USP version: %v, toId: %v", rData.version, rData.toId)
+	log.Printf("Rx Record: USP version: %v, toId: %v", rData.version, rData.toId)
 	log.Println("Validated controller Id and USP protocol version")
 	return nil
 }

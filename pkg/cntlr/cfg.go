@@ -17,6 +17,7 @@ package cntlr
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -37,8 +38,9 @@ type cacheCfg struct {
 }
 
 type uspCfg struct {
-	endpointId   string
-	protoVersion string
+	endpointId        string
+	protoVersion      string
+	protoVersionCheck bool
 }
 
 type cntlrCfg struct {
@@ -78,6 +80,12 @@ func (c *Cntlr) loadConfigFromEnv() error {
 		c.cfg.usp.protoVersion = env
 	} else {
 		log.Println("CNTLR USP Protocol Version is not set")
+	}
+	if env, ok := os.LookupEnv("CNTLR_USP_PROTO_VERSION_CHECK"); ok {
+		boolValue, _ := strconv.ParseBool(env)
+		c.cfg.usp.protoVersionCheck = boolValue
+	} else {
+		log.Println("CNTLR USP Protocol Version Check is not enforced")
 	}
 
 	log.Printf("CNTLR Config params: %+v\n", c.cfg)

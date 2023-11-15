@@ -77,7 +77,7 @@ func (c *Cntlr) MtpStart() error {
 func (c *Cntlr) MtpReceiveThread() {
 	for {
 		chanData := <-c.mtpH.rxChannel
-		log.Println("Shibu: Rx'd USP record from mtp type: ", chanData.MtpType)
+		log.Println("Rx'd USP record from mtp type: ", chanData.MtpType)
 
 		rData, err := c.parseUspRecord(chanData.Rec)
 		if err != nil {
@@ -94,7 +94,7 @@ func (c *Cntlr) MtpReceiveThread() {
 		if rData.recordType == "STOMP_CONNECT" {
 			aStomp := &mtp.AgentStomp{}
 			aStomp.Conn = c.mtpH.stomp.Conn
-			aStomp.DestQueue = "/queue/agent-1" //agentId
+			aStomp.DestQueue = rData.destQueue
 
 			initData := &agentInitData{}
 			initData.epId = agentId
@@ -119,7 +119,7 @@ func (c *Cntlr) MtpReceiveThread() {
 			}
 			aStomp := &mtp.AgentStomp{}
 			aStomp.Conn = c.mtpH.stomp.Conn
-			aStomp.DestQueue = agentId
+			aStomp.DestQueue = rData.destQueue
 
 			if mData.notify.nType == NotifyEvent && mData.notify.evt.name == "Boot!" {
 				log.Println("Received Boot event from agent")

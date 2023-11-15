@@ -85,7 +85,7 @@ func (c *Cntlr) Cli() {
 		Func: c.cliSendDeleteInstanceMsg,
 	})
 
-	/* Shibu: TODO
+	/* TODO
 	shell.AddCmd(&ishell.Cmd{
 		Name: "getresp",
 		Help: "receive respone from agent, ex: getresp",
