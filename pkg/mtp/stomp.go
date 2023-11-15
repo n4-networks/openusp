@@ -37,7 +37,6 @@ type stompCfg struct {
 	mode            string
 	serverAddr      string
 	serverAddrTLS   string
-	agentQueue      string
 	controllerQueue string
 	userName        string
 	passwd          string
@@ -70,13 +69,6 @@ func loadStompConfigFromEnv() error {
 	} else {
 		log.Println("STOMP Server Addr is not set")
 		return errors.New("STOMP_ADDR is not set")
-	}
-
-	if env, ok := os.LookupEnv("STOMP_AGENT_QUEUE"); ok {
-		sCfg.agentQueue = env
-	} else {
-		log.Println("STOMP Agent Queue is not set")
-		return errors.New("STOMP_AGENT_QUEUE is not set")
 	}
 
 	if env, ok := os.LookupEnv("STOMP_CNTLR_QUEUE"); ok {
@@ -118,8 +110,8 @@ func (s AgentStomp) SendMsg(msg []byte) error {
 	id := stompngo.Uuid()
 	h = h.Add("id", id)
 	h = h.Add("destination", s.DestQueue)
+	log.Printf("Stomp destination: %v", s.DestQueue)
 	h = h.Add("content-type", "application/vnd.bbf.usp.msg")
-	log.Printf("Sending USP record to destination: %v, Success", s.DestQueue)
 	return s.Conn.SendBytes(h, msg)
 }
 
