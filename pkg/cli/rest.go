@@ -303,7 +303,8 @@ func (cli *Cli) restGet(url string) ([]byte, error) {
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.SetBasicAuth("n4admin", "n4defaultpass")
+	//req.SetBasicAuth("n4admin", "n4defaultpass")
+	req.SetBasicAuth(cli.cfg.authName, cli.cfg.authPasswd)
 
 	resp, err := cli.rest.client.Do(req)
 	if err != nil {
@@ -336,7 +337,8 @@ func (cli *Cli) restPost(url string, data []byte) ([]byte, error) {
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.SetBasicAuth("n4admin", "n4defaultpass")
+	//req.SetBasicAuth("n4admin", "n4defaultpass")
+	req.SetBasicAuth(cli.cfg.authName, cli.cfg.authPasswd)
 
 	log.Println("HTTP post to url:", url)
 	resp, err := cli.rest.client.Do(req)

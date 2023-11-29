@@ -50,6 +50,11 @@ func (c *Cntlr) parseUspRecord(s []byte) (*uspRecordData, error) {
 		rData.destQueue = sc.GetSubscribedDestination()
 		log.Println("Subscribed Destination:", sc.GetSubscribedDestination())
 		rData.recordType = "STOMP_CONNECT"
+	case *usp_record.Record_WebsocketConnect:
+		//sc := r.GetStompConnect()
+		log.Println("Record Type:", r.GetWebsocketConnect())
+		rData.recordType = "WS_CONNECT"
+		//rData.recordType = "STOMP_CONNECT"
 	default:
 		log.Println("Invalid record type")
 	}

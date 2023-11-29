@@ -25,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
 	coap "github.com/plgd-dev/go-coap/v2"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
@@ -79,12 +78,6 @@ type AgentCoap struct {
 }
 
 func loadCoapConfigFromEnv() error {
-
-	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
-		log.Println("Error in loading .env file")
-		return err
-	}
-
 	if env, ok := os.LookupEnv("COAP_SERVER_MODE"); ok {
 		cCfg.server.mode = env
 	} else {

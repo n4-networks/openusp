@@ -248,7 +248,7 @@ func (c *Cntlr) getAgentMtp(epId string) (agentMtpIntf, error) {
 			switch paramMap[inst.path+"Protocol"] {
 			case "STOMP":
 				aStomp := &mtp.AgentStomp{}
-				aStomp.Conn = c.mtpH.stomp.Conn
+				aStomp.Conn = c.mtpH.StompH.Conn
 				aStomp.DestQueue = paramMap[inst.path+"STOMP.Destination"]
 				c.agentH.mtpMap[epId] = aStomp
 				return aStomp, nil

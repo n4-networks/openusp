@@ -68,7 +68,7 @@ func (as *ApiServer) Init() error {
 	log.Println("Running Api Server version:", getVer())
 
 	log.Println("Reading config parameters...")
-	if err := as.config(); err != nil {
+	if err := as.loadConfigFromEnv(); err != nil {
 		log.Println("Could not configure Api Server, err:", err)
 		return err
 	}
@@ -102,7 +102,7 @@ func (as *ApiServer) Init() error {
 	return nil
 }
 
-func (as *ApiServer) config() error {
+func (as *ApiServer) loadConfigFromEnv() error {
 
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Println("Error in loading .env file")
@@ -171,7 +171,7 @@ func (as *ApiServer) config() error {
 }
 
 func (as *ApiServer) loggingInit() error {
-	log.SetPrefix("N4: ")
+	log.SetPrefix("OpenUSP: ")
 	switch as.cfg.logSetting {
 	case "short":
 		log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)

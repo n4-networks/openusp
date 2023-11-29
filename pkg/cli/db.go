@@ -27,7 +27,7 @@ func (cli *Cli) registerNounsDb() {
 	cli.registerNouns(cmds)
 }
 
-const removeDbHelp = "remove db datamodel|instances|params|cfginstances|cfgparams"
+const removeDbHelp = "remove db datamodel|instances|params|cfginstances|cfgparams|running|cfg|all"
 
 func (cli *Cli) removeDbColl(c *ishell.Context) {
 	if len(c.Args) < 1 {
@@ -36,15 +36,40 @@ func (cli *Cli) removeDbColl(c *ishell.Context) {
 	}
 	collName := c.Args[0]
 	if collName != "datamodel" && collName != "instances" && collName != "params" &&
-		collName != "cfginstances" && collName != "cfgparams" {
+		collName != "cfginstances" && collName != "cfgparams" && collName != "running" &&
+		collName != "cfg" && collName != "all" {
 		c.Println("Invalid db/collection name.", removeDbHelp)
 		return
 	}
-	if err := cli.restDeleteCollection(collName); err != nil {
-		log.Printf("Error in deleteing db/collection: %v, err: %v\n", collName, err)
-		return
+	switch collName {
+	case "cfg":
+		colls := []string{"cfginstances", "cfgparams"}
+		for _, coll := range colls {
+			if err := cli.restDeleteCollection(coll); err != nil {
+				log.Printf("Error in deleteing db/collection: %v, err: %v\n", collName, err)
+			}
+		}
+	case "all":
+		colls := []string{"datamodel", "instance", "params", "cfginstances", "cfgparams"}
+		for _, coll := range colls {
+			if err := cli.restDeleteCollection(coll); err != nil {
+				log.Printf("Error in deleteing db/collection: %v, err: %v\n", collName, err)
+			}
+		}
+	case "running":
+		colls := []string{"datamodel", "instance", "params"}
+		for _, coll := range colls {
+			if err := cli.restDeleteCollection(coll); err != nil {
+				log.Printf("Error in deleteing db/collection: %v, err: %v\n", collName, err)
+			}
+		}
+	default:
+		if err := cli.restDeleteCollection(collName); err != nil {
+			log.Printf("Error in deleteing db/collection: %v, err: %v\n", collName, err)
+			return
+		}
+		c.Printf("Db/Collection %v has been removed successfully", collName)
 	}
-	c.Printf("Db/Collection %v has been removed successfully", collName)
 	c.Println("-------------------------------------------------\n")
 }
 

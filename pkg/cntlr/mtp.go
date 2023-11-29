@@ -21,62 +21,9 @@ import (
 	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
 )
 
-type mtpHandler struct {
-	stomp     *mtp.Stomp
-	mqtt      *mtp.Mqtt
-	coap      *mtp.CoAP
-	rxChannel chan mtp.RxChannelData
-}
-
-func (c *Cntlr) mtpInit() error {
-
-	c.mtpH.rxChannel = make(chan mtp.RxChannelData, 10)
-	mtp.SetRxChannel(c.mtpH.rxChannel)
-
-	// Initialize Stomp client
-	stompHandler, err := mtp.StompInit()
-	if err != nil {
-		log.Println("Error in stompInit()")
-		return err
-	}
-	c.mtpH.stomp = stompHandler
-
-	// Initialize Mqtt client
-	mqttClient, err1 := mtp.MqttInit()
-	if err1 != nil {
-		log.Println("Error in mqttInit()")
-		return err1
-	}
-	c.mtpH.mqtt = &mtp.Mqtt{Client: mqttClient}
-	//c.mtpH.mqtt.Client = mqttClient
-
-	// Initialize  CoAP Server
-	coapHandler, err2 := mtp.CoAPServerInit()
-	if err2 != nil {
-		log.Println("Error in CoapServerInit()")
-		return err2
-	}
-	c.mtpH.coap = coapHandler
-	log.Println("Controller MTP has been initialized successfully!")
-
-	return nil
-}
-
-func (c *Cntlr) MtpStart() error {
-	go mtp.CoAPServerThread(c.mtpH.coap)
-
-	rxChannel := c.mtpH.rxChannel
-	go mtp.StompReceiveThread(c.mtpH.stomp, rxChannel)
-
-	if err := mtp.MqttStart(c.mtpH.mqtt.Client); err != nil {
-		log.Println("Error in Strating MQTT MTP")
-	}
-	return nil
-}
-
-func (c *Cntlr) MtpReceiveThread() {
+func (c *Cntlr) MtpRxMessageHandler() {
 	for {
-		chanData := <-c.mtpH.rxChannel
+		chanData := <-c.mtpH.RxChannel
 		log.Println("Rx'd USP record from mtp type: ", chanData.MtpType)
 
 		rData, err := c.parseUspRecord(chanData.Rec)
@@ -93,7 +40,7 @@ func (c *Cntlr) MtpReceiveThread() {
 		}
 		if rData.recordType == "STOMP_CONNECT" {
 			aStomp := &mtp.AgentStomp{}
-			aStomp.Conn = c.mtpH.stomp.Conn
+			aStomp.Conn = c.mtpH.StompH.Conn
 			aStomp.DestQueue = rData.destQueue
 
 			initData := &agentInitData{}
@@ -103,6 +50,8 @@ func (c *Cntlr) MtpReceiveThread() {
 			initData.mtpIntf = aStomp
 			go c.agentInitThread(initData)
 			continue
+
+		} else if rData.recordType == "WEBSOCKET_CONNECT" {
 
 		}
 		mData, err := parseUspMsg(rData)
@@ -118,7 +67,7 @@ func (c *Cntlr) MtpReceiveThread() {
 				continue
 			}
 			aStomp := &mtp.AgentStomp{}
-			aStomp.Conn = c.mtpH.stomp.Conn
+			aStomp.Conn = c.mtpH.StompH.Conn
 			aStomp.DestQueue = rData.destQueue
 
 			if mData.notify.nType == NotifyEvent && mData.notify.evt.name == "Boot!" {

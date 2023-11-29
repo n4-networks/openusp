@@ -22,7 +22,6 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/joho/godotenv"
 )
 
 type Mqtt struct {
@@ -46,12 +45,6 @@ type agentMqtt struct {
 }
 
 func loadMqttConfigFromEnv() error {
-
-	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
-		log.Println("Error in loading .env file")
-		return err
-	}
-
 	if env, ok := os.LookupEnv("MQTT_MODE"); ok {
 		mCfg.mode = env
 	} else {

@@ -18,6 +18,7 @@ import (
 	"log"
 
 	"github.com/n4-networks/openusp/pkg/db"
+	"github.com/n4-networks/openusp/pkg/mtp"
 	"github.com/n4-networks/openusp/pkg/pb/cntlrgrpc"
 )
 
@@ -32,7 +33,7 @@ const (
 type Cntlr struct {
 	cfg    cntlrCfg
 	dbH    db.UspDb
-	mtpH   mtpHandler
+	mtpH   *mtp.MtpHandler
 	cacheH cacheHandler
 	agentH agentHandler
 	cntlrgrpc.UnimplementedGrpcServer
@@ -57,10 +58,12 @@ func (c *Cntlr) Init() error {
 	}
 	log.Println("Db Init ...successful!")
 
-	if err := c.mtpInit(); err != nil {
+	mtpH, err := mtp.Init()
+	if err != nil {
 		log.Println("Error in mtpInit()")
 		return err
 	}
+	c.mtpH = mtpH
 	log.Println("MTP Init ...successful!")
 
 	// Initialize Cache handler
@@ -83,11 +86,14 @@ func (c *Cntlr) Run() (chan int32, error) {
 	var exit chan int32
 	var err error = nil
 
-	c.MtpStart()
+	log.Println("Starting MTP threads...")
+	mtp.MtpRxThreads(c.mtpH)
 
+	log.Println("Starting GRPC Server...")
 	go c.GrpcServerThread(c.cfg.grpc.port, exit)
 
-	go c.MtpReceiveThread()
+	log.Println("Starting Cntrl MTP Rx Msg Handler thread...")
+	go c.MtpRxMessageHandler()
 
 	//go m.agentHandlerThread()
 

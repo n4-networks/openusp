@@ -25,7 +25,6 @@ import (
 
 	"github.com/gmallard/stompngo"
 	"github.com/gmallard/stompngo/senv"
-	"github.com/joho/godotenv"
 )
 
 type Stomp struct {
@@ -52,12 +51,6 @@ type AgentStomp struct {
 }
 
 func loadStompConfigFromEnv() error {
-
-	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
-		log.Println("Error in loading .env file")
-		return err
-	}
-
 	if env, ok := os.LookupEnv("STOMP_MODE"); ok {
 		sCfg.mode = env
 	} else {

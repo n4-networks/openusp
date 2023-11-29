@@ -15,6 +15,7 @@
 package cli
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -34,6 +35,8 @@ type cliCfg struct {
 	histFile      string
 	connTimeout   time.Duration
 	logSetting    string
+	authName      string
+	authPasswd    string
 }
 type restHandler struct {
 	client *http.Client
@@ -173,6 +176,20 @@ func (cli *Cli) loadConfigFromEnv() error {
 		cli.cfg.logSetting = env
 	} else {
 		cli.cfg.logSetting = "none"
+	}
+
+	if env, ok := os.LookupEnv("API_SERVER_AUTH_NAME"); ok {
+		cli.cfg.authName = env
+	} else {
+		log.Println("Default http auth login name was not found")
+		return errors.New("Could not find HTTP basic auth login name")
+	}
+
+	if env, ok := os.LookupEnv("API_SERVER_AUTH_PASSWD"); ok {
+		cli.cfg.authPasswd = env
+	} else {
+		log.Println("Default http auth login password was not found")
+		return errors.New("Could not find HTTP basic auth password")
 	}
 
 	if env, ok := os.LookupEnv("AGENT_ID"); ok {
