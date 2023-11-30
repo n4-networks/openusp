@@ -35,16 +35,20 @@ type MtpWs struct {
 	MsgCnt uint64
 }
 
-func (m MtpWs) SendMsg(data []byte) error {
+func (m *MtpWs) SendMsg(data []byte) error {
 	return m.Conn.WriteMessage(websocket.BinaryMessage, data)
 }
 
-func (m MtpWs) GetMsgCnt() uint64 {
+func (m *MtpWs) GetMsgCnt() uint64 {
 	return m.MsgCnt
 }
 
-func (m MtpWs) IncMsgCnt() {
+func (m *MtpWs) IncMsgCnt() {
 	m.MsgCnt++
+}
+
+func (m *MtpWs) SetParam(name string, value string) error {
+	return nil
 }
 
 var wCfg wsCfg
@@ -113,10 +117,10 @@ func wsReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	mtpIntf.Conn = conn
 	for {
 		if _, message, err := conn.ReadMessage(); err != nil {
-			log.Println("read:", err)
+			log.Println("WS Read Error:", err)
 			return
 		} else {
-			log.Printf("recv: %s", message)
+			//log.Println("recv: %s", message)
 			rxData := &RxChannelData{}
 			rxData.Rec = message
 			rxData.MtpType = "ws"
@@ -126,7 +130,7 @@ func wsReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func WsServerStart() {
+func WsServerThread() {
 	http.ListenAndServe(wCfg.addr, nil)
 
 }

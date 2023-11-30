@@ -19,6 +19,7 @@ import (
 )
 
 type MtpIntf interface {
+	SetParam(string, string) error
 	SendMsg([]byte) error
 	GetMsgCnt() uint64
 	IncMsgCnt()
@@ -38,7 +39,7 @@ func SetRxChannel(rxChannel chan RxChannelData) {
 }
 
 type MtpHandler struct {
-	StompH    *Stomp
+	StompH    MtpStomp
 	MqttH     *Mqtt
 	CoapH     *CoAP
 	RxChannel chan RxChannelData
@@ -48,16 +49,13 @@ func Init() (*MtpHandler, error) {
 
 	mtpH := &MtpHandler{}
 	mtpH.RxChannel = make(chan RxChannelData, 10)
-	//SetRxChannel(c.mtpH.rxChannel)
 	rxC = mtpH.RxChannel
 
 	// Initialize Stomp client
-	stompHandler, err := StompInit()
-	if err != nil {
+	if err := mtpH.StompH.Init(); err != nil {
 		log.Println("Error in stompInit()")
 		return nil, err
 	}
-	mtpH.StompH = stompHandler
 
 	// Initialize Mqtt client
 	mqttClient, err1 := MqttInit()
@@ -91,13 +89,13 @@ func MtpRxThreads(mtpH *MtpHandler) error {
 	go CoAPServerThread(mtpH.CoapH)
 
 	rxChannel := mtpH.RxChannel
-	go StompReceiveThread(mtpH.StompH, rxChannel)
+	go mtpH.StompH.ReceiveThread(rxChannel)
 
 	if err := MqttStart(mtpH.MqttH.Client); err != nil {
 		log.Println("Error in Strating MQTT MTP")
 	}
 
-	go WsServerStart()
+	go WsServerThread()
 	return nil
 }
 

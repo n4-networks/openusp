@@ -38,10 +38,10 @@ type mqttCfg struct {
 
 var mCfg mqttCfg
 
-type agentMqtt struct {
-	client mqtt.Client
-	topic  string
-	msgCnt uint64
+type MtpMqtt struct {
+	Client mqtt.Client
+	Topic  string
+	MsgCnt uint64
 }
 
 func loadMqttConfigFromEnv() error {
@@ -81,19 +81,19 @@ func loadMqttConfigFromEnv() error {
 	return nil
 }
 
-func (s agentMqtt) sendMsg(msg []byte) error {
-	log.Println("Mqtt publishing message to topic:", s.topic)
-	token := s.client.Publish(s.topic, 0, false, msg)
+func (s *MtpMqtt) SendMsg(msg []byte) error {
+	log.Println("Mqtt publishing message to topic:", s.Topic)
+	token := s.Client.Publish(s.Topic, 0, false, msg)
 	token.Wait()
 	return token.Error()
 }
 
-func (s agentMqtt) getMsgCnt() uint64 {
-	return s.msgCnt
+func (s *MtpMqtt) GetMsgCnt() uint64 {
+	return s.MsgCnt
 }
 
-func (s agentMqtt) incMsgCnt() {
-	s.msgCnt++
+func (s *MtpMqtt) IncMsgCnt() {
+	s.MsgCnt++
 }
 
 var publishHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {

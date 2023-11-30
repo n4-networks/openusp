@@ -44,10 +44,11 @@ type stompCfg struct {
 
 var sCfg stompCfg
 
-type AgentStomp struct {
+type MtpStomp struct {
 	Conn      *stompngo.Connection
 	DestQueue string
 	MsgCnt    uint64
+	RxChannel <-chan stompngo.MessageData
 }
 
 func loadStompConfigFromEnv() error {
@@ -97,7 +98,7 @@ func loadStompConfigFromEnv() error {
 
 }
 
-func (s AgentStomp) SendMsg(msg []byte) error {
+func (s *MtpStomp) SendMsg(msg []byte) error {
 	log.Println("Stomp SendMsg is being called")
 	h := stompngo.Headers{}
 	id := stompngo.Uuid()
@@ -108,11 +109,11 @@ func (s AgentStomp) SendMsg(msg []byte) error {
 	return s.Conn.SendBytes(h, msg)
 }
 
-func (s AgentStomp) GetMsgCnt() uint64 {
+func (s *MtpStomp) GetMsgCnt() uint64 {
 	return s.MsgCnt
 }
 
-func (s AgentStomp) IncMsgCnt() {
+func (s *MtpStomp) IncMsgCnt() {
 	s.MsgCnt++
 }
 
@@ -137,11 +138,11 @@ func connectHeaders() stompngo.Headers {
 	}
 	return h
 }
-func StompInit() (*Stomp, error) {
+func (s *MtpStomp) Init() error {
 
 	if err := loadStompConfigFromEnv(); err != nil {
 		log.Println("Error in loading STOMP config from Env")
-		return nil, err
+		return err
 	}
 
 	var d net.Dialer
@@ -156,7 +157,7 @@ func StompInit() (*Stomp, error) {
 				log.Printf("Connection STOMP Server failed, retrying (%v of %v)\n", i, sCfg.retryCount)
 			} else {
 				log.Println("Connection to STOMP Server failed, exiting: ", err.Error())
-				return nil, err
+				return err
 			}
 		}
 	}
@@ -165,7 +166,7 @@ func StompInit() (*Stomp, error) {
 	conn, err := stompngo.Connect(n, h)
 	if err != nil {
 		log.Fatalln("Error in connecting to STOMP server: ", err.Error())
-		return nil, err
+		return err
 	}
 
 	// Subcribe to receive queue for msgs coming from Agent
@@ -178,23 +179,32 @@ func StompInit() (*Stomp, error) {
 		log.Fatalf("Could not subscribe to: %v, Err: %v: ", sCfg.controllerQueue, err.Error())
 		h := stompngo.Headers{"noreceipt", "true"} // no receipt
 		conn.Disconnect(h)
-		return nil, err
+		return err
 	}
 	log.Println("Subscribed to Rx Agent Queue: ", sCfg.controllerQueue)
 
-	s := &Stomp{}
+	//s := &Stomp{}
 	s.Conn = conn
 	s.RxChannel = sub
 
-	return s, nil
+	return nil
 }
 
-func StompReceiveThread(s *Stomp, rxChannel chan RxChannelData) {
+func (s *MtpStomp) SetParam(name string, value string) error {
+	if name == "DestQueue" {
+		s.DestQueue = value
+	}
+	return nil
+}
+func (s *MtpStomp) ReceiveThread(rxChannel chan RxChannelData) {
+	log.Println("Starting Stomp MTP thread")
 	for {
 		stompMsg := <-s.RxChannel
+		log.Println("Stomp rx msg")
 		rxData := &RxChannelData{}
 		rxData.Rec = stompMsg.Message.Body
 		rxData.MtpType = "stomp"
+		rxData.Mtp = s
 		rxChannel <- *rxData
 	}
 }

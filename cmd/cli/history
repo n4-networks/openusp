@@ -72,3 +72,51 @@ show agent cli-id
 show help
 show agent mtp
 exit
+show agent
+exit
+show
+show history
+show ip
+show nat
+show wifi
+show status
+show agent help
+show agent controller
+exit
+show agent
+exit
+show agent
+exit
+show agent
+show agent all-ids
+help
+remove db
+remove db all
+remove db help
+remove db datamodel instances params
+exit
+show agent
+exit
+help
+show agent cli-id
+show agent all-ids
+remove help
+remove db help
+remove db all
+show agent all-ids
+show agent cli-ids
+show agent
+show agent all-ids
+show agent
+show mtp
+show device
+show help
+show stomp
+show time
+show version
+show help
+show device
+show devinfo
+exit
+show time
+exit

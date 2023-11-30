@@ -25,26 +25,20 @@ import (
 	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
 )
 
-type agentMtpIntf interface {
-	SendMsg([]byte) error
-	GetMsgCnt() uint64
-	IncMsgCnt()
-}
-
 type agentInitData struct {
 	epId    string
-	mtpIntf agentMtpIntf
+	mtpIntf mtp.MtpIntf
 	params  map[string]string
 }
 
 type agentHandler struct {
-	mtpMap    map[string]agentMtpIntf
+	mtpMap    map[string]mtp.MtpIntf
 	rxChannel chan agentInitData
 }
 
 func (c *Cntlr) agentHandlerInit() error {
-	c.agentH.mtpMap = make(map[string]agentMtpIntf, 1000) // max map size of 1000 agent at a time
-	c.agentH.rxChannel = make(chan agentInitData, 100)    // buffered channel with queue size of 100
+	c.agentH.mtpMap = make(map[string]mtp.MtpIntf, 1000) // max map size of 1000 agent at a time
+	c.agentH.rxChannel = make(chan agentInitData, 100)   // buffered channel with queue size of 100
 	return nil
 }
 
@@ -113,7 +107,7 @@ func (c *Cntlr) agentInitThread(initData *agentInitData) {
 	c.agentH.mtpMap[agentId] = mtpIntf
 }
 
-func (c *Cntlr) sendUspMsgToAgent(agentId string, uspMsg []byte, mtpIntf agentMtpIntf) error {
+func (c *Cntlr) sendUspMsgToAgent(agentId string, uspMsg []byte, mtpIntf mtp.MtpIntf) error {
 	controllerId := c.cfg.usp.endpointId
 	uspRecord, err := parser.CreateNewPlainTextRecord(&agentId, &controllerId, nil, nil, uspMsg)
 	if err != nil {
@@ -128,7 +122,7 @@ func (c *Cntlr) sendUspMsgToAgent(agentId string, uspMsg []byte, mtpIntf agentMt
 	return nil
 }
 
-func (c *Cntlr) setAgentDefaultConfig(agentId string, notifyParams map[string]string, mtpIntf agentMtpIntf) error {
+func (c *Cntlr) setAgentDefaultConfig(agentId string, notifyParams map[string]string, mtpIntf mtp.MtpIntf) error {
 	// Read cfg instance table
 	var devInfo agentDeviceInfo
 	var msgId string
@@ -218,7 +212,7 @@ func strToMapWithTwoDelims(s string, delim1 string, delim2 string) (map[string]s
 	return m, nil
 }
 
-func (c *Cntlr) getAgentMtp(epId string) (agentMtpIntf, error) {
+func (c *Cntlr) getAgentMtp(epId string) (mtp.MtpIntf, error) {
 	// return agentMtpIntf if available in agent handle
 	if mtpIntf, ok := c.agentH.mtpMap[epId]; ok {
 		log.Println("Found agent MTP intf in agent handler")
@@ -247,13 +241,13 @@ func (c *Cntlr) getAgentMtp(epId string) (agentMtpIntf, error) {
 		if paramMap[inst.path+"Enable"] == "true" {
 			switch paramMap[inst.path+"Protocol"] {
 			case "STOMP":
-				aStomp := &mtp.AgentStomp{}
+				aStomp := &mtp.MtpStomp{}
 				aStomp.Conn = c.mtpH.StompH.Conn
 				aStomp.DestQueue = paramMap[inst.path+"STOMP.Destination"]
 				c.agentH.mtpMap[epId] = aStomp
 				return aStomp, nil
 			case "CoAP":
-				aCoap := &mtp.AgentCoap{}
+				aCoap := &mtp.MtpCoap{}
 				aCoap.Port = paramMap[inst.path+"CoAP.Port"]
 				aCoap.Path = paramMap[inst.path+"CoAP.Path"]
 				aCoap.IsEncrypted = paramMap[inst.path+"CoAP.IsEncrypted"]

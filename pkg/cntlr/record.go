@@ -46,21 +46,19 @@ func (c *Cntlr) parseUspRecord(s []byte) (*uspRecordData, error) {
 	switch r.RecordType.(type) {
 	case *usp_record.Record_StompConnect:
 		sc := r.GetStompConnect()
-		log.Println("Record Type:", r.GetStompConnect())
 		rData.destQueue = sc.GetSubscribedDestination()
-		log.Println("Subscribed Destination:", sc.GetSubscribedDestination())
+		log.Println("Agent DestQueue:", sc.GetSubscribedDestination())
 		rData.recordType = "STOMP_CONNECT"
 	case *usp_record.Record_WebsocketConnect:
-		//sc := r.GetStompConnect()
-		log.Println("Record Type:", r.GetWebsocketConnect())
 		rData.recordType = "WS_CONNECT"
-		//rData.recordType = "STOMP_CONNECT"
 	default:
-		log.Println("Invalid record type")
+		log.Println("Record type: Data")
+		rData.recordType = "DATA"
 	}
 
 	log.Println("Record ToId: ", rData.toId)
 	log.Println("Record FromId: ", rData.fromId)
+	log.Println("Record Type: ", rData.recordType)
 
 	msg := &usp_msg.Msg{}
 	if s := r.GetNoSessionContext(); s != nil {

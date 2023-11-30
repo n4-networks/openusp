@@ -65,7 +65,7 @@ type coapMsgData struct {
 	pdu      []byte
 }
 
-type AgentCoap struct {
+type MtpCoap struct {
 	addr        string
 	Port        string
 	Path        string
@@ -148,7 +148,11 @@ func CoAPServerDTLS(cfg *CoAPCfg, exit chan int32) {
 }
 */
 
-func (c AgentCoap) SendMsg(msg []byte) error {
+func (c *MtpCoap) SetParam(name string, value string) error {
+	return nil
+}
+
+func (c *MtpCoap) SendMsg(msg []byte) error {
 	var err error
 	if c.conn == nil {
 		c.conn, err = udp.Dial(c.addr)
@@ -170,10 +174,10 @@ func (c AgentCoap) SendMsg(msg []byte) error {
 	log.Printf("POST Response: %v", resp.String())
 	return nil
 }
-func (c AgentCoap) GetMsgCnt() uint64 {
+func (c *MtpCoap) GetMsgCnt() uint64 {
 	return c.msgCnt
 }
-func (c AgentCoap) IncMsgCnt() {
+func (c *MtpCoap) IncMsgCnt() {
 	c.msgCnt++ //TODO: use lock here
 }
 
@@ -201,8 +205,8 @@ func coapReceiveHandler(w mux.ResponseWriter, req *mux.Message) {
 
 }
 
-func getAgentInfoCoap(cData *coapMsgData) (*AgentCoap, error) {
-	aCoap := &AgentCoap{}
+func getAgentInfoCoap(cData *coapMsgData) (*MtpCoap, error) {
+	aCoap := &MtpCoap{}
 	aCoap.conn = nil
 	u, err := url.Parse(cData.uriQuery)
 	if err != nil {

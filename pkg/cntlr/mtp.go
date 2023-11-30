@@ -17,7 +17,6 @@ package cntlr
 import (
 	"log"
 
-	"github.com/n4-networks/openusp/pkg/mtp"
 	"github.com/n4-networks/openusp/pkg/pb/bbf/usp_msg"
 )
 
@@ -39,19 +38,19 @@ func (c *Cntlr) MtpRxMessageHandler() {
 			continue
 		}
 		if rData.recordType == "STOMP_CONNECT" {
-			aStomp := &mtp.AgentStomp{}
-			aStomp.Conn = c.mtpH.StompH.Conn
-			aStomp.DestQueue = rData.destQueue
-
 			initData := &agentInitData{}
 			initData.epId = agentId
-			//params, _ := strToMapWithTwoDelims(mData.notify.evt.params["ParameterMap"], ",", ":")
-			//initData.params = params
-			initData.mtpIntf = aStomp
+			chanData.Mtp.SetParam("DestQueue", rData.destQueue)
+			initData.mtpIntf = chanData.Mtp
 			go c.agentInitThread(initData)
 			continue
 
-		} else if rData.recordType == "WEBSOCKET_CONNECT" {
+		} else if rData.recordType == "WS_CONNECT" {
+			initData := &agentInitData{}
+			initData.epId = agentId
+			initData.mtpIntf = chanData.Mtp
+			go c.agentInitThread(initData)
+			continue
 
 		}
 		mData, err := parseUspMsg(rData)
@@ -66,18 +65,16 @@ func (c *Cntlr) MtpRxMessageHandler() {
 				log.Println("mData.notify is nil")
 				continue
 			}
-			aStomp := &mtp.AgentStomp{}
-			aStomp.Conn = c.mtpH.StompH.Conn
-			aStomp.DestQueue = rData.destQueue
-
+			chanData.Mtp.SetParam("DestQueue", rData.destQueue)
 			if mData.notify.nType == NotifyEvent && mData.notify.evt.name == "Boot!" {
 				log.Println("Received Boot event from agent")
 				initData := &agentInitData{}
 				initData.epId = agentId
 				params, _ := strToMapWithTwoDelims(mData.notify.evt.params["ParameterMap"], ",", ":")
 				initData.params = params
-				initData.mtpIntf = aStomp
+				initData.mtpIntf = chanData.Mtp
 				go c.agentInitThread(initData)
+				continue
 
 			}
 			if mData.notify.sendResp {
@@ -87,7 +84,7 @@ func (c *Cntlr) MtpRxMessageHandler() {
 					log.Println("could not prepare notify response record, err:", err)
 					continue
 				}
-				if err := c.sendUspMsgToAgent(agentId, uspMsg, aStomp); err != nil {
+				if err := c.sendUspMsgToAgent(agentId, uspMsg, chanData.Mtp); err != nil {
 					log.Println("Error in sending USP record, err:", err)
 					continue
 				}
