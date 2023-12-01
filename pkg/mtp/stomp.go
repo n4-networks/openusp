@@ -27,11 +27,6 @@ import (
 	"github.com/gmallard/stompngo/senv"
 )
 
-type Stomp struct {
-	Conn      *stompngo.Connection
-	RxChannel <-chan stompngo.MessageData
-}
-
 type stompCfg struct {
 	mode            string
 	serverAddr      string
@@ -51,7 +46,7 @@ type MtpStomp struct {
 	RxChannel <-chan stompngo.MessageData
 }
 
-func loadStompConfigFromEnv() error {
+func (m *MtpStomp) configFromEnv() error {
 	if env, ok := os.LookupEnv("STOMP_MODE"); ok {
 		sCfg.mode = env
 	} else {
@@ -98,23 +93,23 @@ func loadStompConfigFromEnv() error {
 
 }
 
-func (s *MtpStomp) SendMsg(msg []byte) error {
+func (m *MtpStomp) SendMsg(msg []byte) error {
 	log.Println("Stomp SendMsg is being called")
 	h := stompngo.Headers{}
 	id := stompngo.Uuid()
 	h = h.Add("id", id)
-	h = h.Add("destination", s.DestQueue)
-	log.Printf("Stomp destination: %v", s.DestQueue)
+	h = h.Add("destination", m.DestQueue)
+	log.Printf("Stomp destination: %v", m.DestQueue)
 	h = h.Add("content-type", "application/vnd.bbf.usp.msg")
-	return s.Conn.SendBytes(h, msg)
+	return m.Conn.SendBytes(h, msg)
 }
 
-func (s *MtpStomp) GetMsgCnt() uint64 {
-	return s.MsgCnt
+func (m *MtpStomp) GetMsgCnt() uint64 {
+	return m.MsgCnt
 }
 
-func (s *MtpStomp) IncMsgCnt() {
-	s.MsgCnt++
+func (m *MtpStomp) IncMsgCnt() {
+	m.MsgCnt++
 }
 
 func connectHeaders() stompngo.Headers {
@@ -138,9 +133,9 @@ func connectHeaders() stompngo.Headers {
 	}
 	return h
 }
-func (s *MtpStomp) Init() error {
+func (m *MtpStomp) Init() error {
 
-	if err := loadStompConfigFromEnv(); err != nil {
+	if err := m.configFromEnv(); err != nil {
 		log.Println("Error in loading STOMP config from Env")
 		return err
 	}
@@ -183,63 +178,27 @@ func (s *MtpStomp) Init() error {
 	}
 	log.Println("Subscribed to Rx Agent Queue: ", sCfg.controllerQueue)
 
-	//s := &Stomp{}
-	s.Conn = conn
-	s.RxChannel = sub
+	m.Conn = conn
+	m.RxChannel = sub
 
 	return nil
 }
 
-func (s *MtpStomp) SetParam(name string, value string) error {
+func (m *MtpStomp) SetParam(name string, value string) error {
 	if name == "DestQueue" {
-		s.DestQueue = value
+		m.DestQueue = value
 	}
 	return nil
 }
-func (s *MtpStomp) ReceiveThread(rxChannel chan RxChannelData) {
+func (m *MtpStomp) RxThread() {
 	log.Println("Starting Stomp MTP thread")
 	for {
-		stompMsg := <-s.RxChannel
+		stompMsg := <-m.RxChannel
 		log.Println("Stomp rx msg")
 		rxData := &RxChannelData{}
 		rxData.Rec = stompMsg.Message.Body
 		rxData.MtpType = "stomp"
-		rxData.Mtp = s
+		rxData.Mtp = m
 		rxChannel <- *rxData
 	}
 }
-
-/*
-func (c *Cntlr) StompReceiveUspMsgFromAgentWithTimer(timer int64) error {
-	select {
-	case <-time.After(1 * time.Second):
-		log.Println("Timeout after 1 second in reading msg, exiting...")
-		return errors.New("Timeout after 1 second")
-	case stompMsg := <-c.mtpH.stomp.RxChannel:
-		rData, err := parseUspRecord(stompMsg.Message.Body)
-		if err != nil {
-			log.Println("Error in parsing the USP record")
-			return err
-		}
-		agentId := rData.fromId
-		log.Println("Rx Agent EndpointId: ", agentId)
-
-		if err := validateUspRecord(rData); err != nil {
-			log.Println("Error in validating Rx USP record")
-			return err
-		}
-
-		mData, err1 := parseUspMsg(rData)
-		if err1 != nil {
-			log.Println("Error in parsing the USP message")
-			return err1
-		}
-
-		if err := c.processRxUspMsg(rData.fromId, mData); err != nil {
-			log.Println("Could not process Rx Msg, err:", err)
-		}
-		log.Println("Processed Rx USP MSG")
-	}
-	return nil
-}
-*/

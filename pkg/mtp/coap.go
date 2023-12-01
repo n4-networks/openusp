@@ -52,10 +52,6 @@ type coapCfg struct {
 
 var cCfg coapCfg
 
-type CoAP struct {
-	Router *mux.Router
-}
-
 type coapMsgData struct {
 	confirm  bool
 	uriQuery string
@@ -73,11 +69,12 @@ type MtpCoap struct {
 
 	selfUriQuery *message.Option
 
+	Router *mux.Router
 	conn   *client.ClientConn
-	msgCnt uint64
+	MsgCnt uint64
 }
 
-func loadCoapConfigFromEnv() error {
+func (m *MtpCoap) configFromEnv() error {
 	if env, ok := os.LookupEnv("COAP_SERVER_MODE"); ok {
 		cCfg.server.mode = env
 	} else {
@@ -96,28 +93,28 @@ func loadCoapConfigFromEnv() error {
 	return nil
 }
 
-func CoAPServerInit() (*CoAP, error) {
+func (m *MtpCoap) Init() error {
 
-	if err := loadCoapConfigFromEnv(); err != nil {
+	if err := m.configFromEnv(); err != nil {
 		log.Println("Error in loading CoAP config from Env")
-		return nil, err
+		return err
 	}
 
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware)
 
-	r.Handle("/a", mux.HandlerFunc(coapReceiveHandler))
+	r.Handle("/a", mux.HandlerFunc(m.coapReceiveHandler))
 	r.Handle("/b", mux.HandlerFunc(handleB))
-	coapH := &CoAP{Router: r}
+	m.Router = r
 
-	return coapH, nil
+	return nil
 }
 
-func CoAPServerThread(c *CoAP) {
+func (m *MtpCoap) ServerThread() {
 
 	addr := ":" + cCfg.server.port
 	log.Println("Starting CoAP server at:", addr)
-	log.Fatal(coap.ListenAndServe("udp", addr, c.Router))
+	log.Fatal(coap.ListenAndServe("udp", addr, m.Router))
 
 	log.Fatalf("CoAP Server is exiting...")
 }
@@ -174,14 +171,14 @@ func (c *MtpCoap) SendMsg(msg []byte) error {
 	log.Printf("POST Response: %v", resp.String())
 	return nil
 }
-func (c *MtpCoap) GetMsgCnt() uint64 {
-	return c.msgCnt
+func (m *MtpCoap) GetMsgCnt() uint64 {
+	return m.MsgCnt
 }
-func (c *MtpCoap) IncMsgCnt() {
-	c.msgCnt++ //TODO: use lock here
+func (m *MtpCoap) IncMsgCnt() {
+	m.MsgCnt++ //TODO: use lock here
 }
 
-func coapReceiveHandler(w mux.ResponseWriter, req *mux.Message) {
+func (m *MtpCoap) coapReceiveHandler(w mux.ResponseWriter, req *mux.Message) {
 	log.Println("remote addr:", w.Client().RemoteAddr())
 	if req.IsConfirmable {
 		log.Println("Sending ACK null msg through setResponse")
@@ -201,7 +198,8 @@ func coapReceiveHandler(w mux.ResponseWriter, req *mux.Message) {
 	rxData := &RxChannelData{}
 	rxData.Rec = cData.pdu
 	rxData.MtpType = "coap"
-	rxC <- *rxData
+	rxData.Mtp = m
+	rxChannel <- *rxData
 
 }
 

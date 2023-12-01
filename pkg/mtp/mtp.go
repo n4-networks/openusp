@@ -32,150 +32,59 @@ type RxChannelData struct {
 	Mtp     MtpIntf
 }
 
-var rxC chan RxChannelData
-
-func SetRxChannel(rxChannel chan RxChannelData) {
-	rxC = rxChannel
-}
+var rxChannel chan RxChannelData
 
 type MtpHandler struct {
 	StompH    MtpStomp
-	MqttH     *Mqtt
-	CoapH     *CoAP
+	MqttH     MtpMqtt
+	WsH       MtpWs
+	CoapH     MtpCoap
 	RxChannel chan RxChannelData
 }
 
-func Init() (*MtpHandler, error) {
+func (m *MtpHandler) Init() error {
 
-	mtpH := &MtpHandler{}
-	mtpH.RxChannel = make(chan RxChannelData, 10)
-	rxC = mtpH.RxChannel
+	rxChannel = make(chan RxChannelData, 100)
+	m.RxChannel = rxChannel
 
 	// Initialize Stomp client
-	if err := mtpH.StompH.Init(); err != nil {
-		log.Println("Error in stompInit()")
-		return nil, err
+	if err := m.StompH.Init(); err != nil {
+		log.Println("Error in StompInit()")
+		return err
 	}
 
 	// Initialize Mqtt client
-	mqttClient, err1 := MqttInit()
-	if err1 != nil {
-		log.Println("Error in mqttInit()")
-		return nil, err1
+	if err := m.MqttH.Init(); err != nil {
+		log.Println("Error in MqttInit()")
+		return err
 	}
-	mtpH.MqttH = &Mqtt{Client: mqttClient}
-	//c.mtpH.mqtt.Client = mqttClient
 
 	// Initialize  CoAP Server
-	coapHandler, err2 := CoAPServerInit()
-	if err2 != nil {
+	if err := m.CoapH.Init(); err != nil {
 		log.Println("Error in CoapServerInit()")
-		return nil, err2
+		return err
 	}
-	mtpH.CoapH = coapHandler
 
 	// Initialize WebSocket Server
-	if err3 := WsServerInit(); err3 != nil {
+	if err := m.WsH.Init(); err != nil {
 		log.Println("Error in WsServerInit()")
-		return nil, err3
+		return err
 	}
 
 	log.Println("Controller MTP has been initialized successfully!")
 
-	return mtpH, nil
-}
-
-func MtpRxThreads(mtpH *MtpHandler) error {
-	go CoAPServerThread(mtpH.CoapH)
-
-	rxChannel := mtpH.RxChannel
-	go mtpH.StompH.ReceiveThread(rxChannel)
-
-	if err := MqttStart(mtpH.MqttH.Client); err != nil {
-		log.Println("Error in Strating MQTT MTP")
-	}
-
-	go WsServerThread()
 	return nil
 }
 
-/*
+func (m *MtpHandler) MtpRxThreads() error {
+	go m.CoapH.ServerThread()
 
-func (c *Cntlr) MtpReceiveThread() {
-	for {
-		chanData := <-c.mtpH.rxChannel
-		log.Println("Rx'd USP record from mtp type: ", chanData.MtpType)
+	go m.StompH.RxThread()
 
-		rData, err := c.parseUspRecord(chanData.Rec)
-		if err != nil {
-			log.Println("Error in parsing the USP record")
-			continue
-		}
-		agentId := rData.fromId
-		log.Println("Rx Agent EndpointId: ", agentId)
-
-		if err := c.validateUspRecord(rData); err != nil {
-			log.Println("Error in validating Rx USP record")
-			continue
-		}
-		if rData.recordType == "STOMP_CONNECT" {
-			aStomp := &mtp.AgentStomp{}
-			aStomp.Conn = c.mtpH.stomp.Conn
-			aStomp.DestQueue = rData.destQueue
-
-			initData := &agentInitData{}
-			initData.epId = agentId
-			//params, _ := strToMapWithTwoDelims(mData.notify.evt.params["ParameterMap"], ",", ":")
-			//initData.params = params
-			initData.mtpIntf = aStomp
-			go c.agentInitThread(initData)
-			continue
-
-		}
-		mData, err := parseUspMsg(rData)
-		if err != nil {
-			log.Println("Error in parsing the USP message")
-			continue
-		}
-		log.Println("Parsed Rx USP MSG")
-
-		if mData.mType == usp_msg.Header_NOTIFY {
-			if mData.notify == nil {
-				log.Println("mData.notify is nil")
-				continue
-			}
-			aStomp := &mtp.AgentStomp{}
-			aStomp.Conn = c.mtpH.stomp.Conn
-			aStomp.DestQueue = rData.destQueue
-
-			if mData.notify.nType == NotifyEvent && mData.notify.evt.name == "Boot!" {
-				log.Println("Received Boot event from agent")
-				initData := &agentInitData{}
-				initData.epId = agentId
-				params, _ := strToMapWithTwoDelims(mData.notify.evt.params["ParameterMap"], ",", ":")
-				initData.params = params
-				initData.mtpIntf = aStomp
-				go c.agentInitThread(initData)
-
-			}
-			if mData.notify.sendResp {
-				log.Println("Preparing USP Notify Response")
-				uspMsg, err := prepareUspMsgNotifyRes(agentId, mData)
-				if err != nil {
-					log.Println("could not prepare notify response record, err:", err)
-					continue
-				}
-				if err := c.sendUspMsgToAgent(agentId, uspMsg, aStomp); err != nil {
-					log.Println("Error in sending USP record, err:", err)
-					continue
-				}
-				log.Println("Sent USP Notify message to agent:", agentId)
-			}
-		}
-		// Non notify messages to be handled here
-		if err := c.processRxUspMsg(agentId, mData); err != nil {
-			log.Println("Error in processing Rx USP msg, err:", err)
-		}
+	if err := m.MqttH.Start(); err != nil {
+		log.Println("Error in Strating MQTT MTP")
 	}
+
+	go m.WsH.ServerThread()
+	return nil
 }
-*/

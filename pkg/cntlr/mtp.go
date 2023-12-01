@@ -51,6 +51,13 @@ func (c *Cntlr) MtpRxMessageHandler() {
 			initData.mtpIntf = chanData.Mtp
 			go c.agentInitThread(initData)
 			continue
+		} else if rData.recordType == "MQTT_CONNECT" {
+			initData := &agentInitData{}
+			initData.epId = agentId
+			chanData.Mtp.SetParam("SubscribedTopic", rData.destQueue)
+			initData.mtpIntf = chanData.Mtp
+			go c.agentInitThread(initData)
+			continue
 
 		}
 		mData, err := parseUspMsg(rData)

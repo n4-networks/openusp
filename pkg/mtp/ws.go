@@ -53,25 +53,17 @@ func (m *MtpWs) SetParam(name string, value string) error {
 
 var wCfg wsCfg
 
-func WsServerInit() error {
-	if err := loadWsConfigFromEnv(); err != nil {
+func (m *MtpWs) Init() error {
+	if err := m.configFromEnv(); err != nil {
 		log.Println("Error in loading WebSocket config from Env")
 		return err
 	}
 	log.Println("Configuring Ws Receive handler with path: ", wCfg.path)
-	http.HandleFunc(wCfg.path, wsReceiveHandler)
+	http.HandleFunc(wCfg.path, m.ReceiveHandler)
 	return nil
 }
 
-func loadWsConfigFromEnv() error {
-
-	/*
-		if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
-			log.Println("Error in loading .env file")
-			return err
-		}
-	*/
-
+func (m *MtpWs) configFromEnv() error {
 	if env, ok := os.LookupEnv("WS_MODE"); ok {
 		wCfg.mode = env
 	} else {
@@ -103,7 +95,7 @@ func loadWsConfigFromEnv() error {
 
 }
 
-func wsReceiveHandler(w http.ResponseWriter, r *http.Request) {
+func (m *MtpWs) ReceiveHandler(w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{} // use default options
 	header := []string{"v1.usp"}
 	conn, err := upgrader.Upgrade(w, r, http.Header{
@@ -113,8 +105,7 @@ func wsReceiveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
-	mtpIntf := &MtpWs{}
-	mtpIntf.Conn = conn
+	m.Conn = conn
 	for {
 		if _, message, err := conn.ReadMessage(); err != nil {
 			log.Println("WS Read Error:", err)
@@ -124,13 +115,14 @@ func wsReceiveHandler(w http.ResponseWriter, r *http.Request) {
 			rxData := &RxChannelData{}
 			rxData.Rec = message
 			rxData.MtpType = "ws"
-			rxData.Mtp = mtpIntf
-			rxC <- *rxData
+			rxData.Mtp = m
+			rxChannel <- *rxData
 		}
 	}
 }
 
-func WsServerThread() {
+func (m *MtpWs) ServerThread() {
+	log.Println("Starting WebSocket server at: ", wCfg.addr)
 	http.ListenAndServe(wCfg.addr, nil)
 
 }

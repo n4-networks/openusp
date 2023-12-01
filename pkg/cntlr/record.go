@@ -51,6 +51,10 @@ func (c *Cntlr) parseUspRecord(s []byte) (*uspRecordData, error) {
 		rData.recordType = "STOMP_CONNECT"
 	case *usp_record.Record_WebsocketConnect:
 		rData.recordType = "WS_CONNECT"
+	case *usp_record.Record_MqttConnect:
+		sc := r.GetMqttConnect()
+		rData.destQueue = sc.GetSubscribedTopic()
+		rData.recordType = "MQTT_CONNECT"
 	default:
 		log.Println("Record type: Data")
 		rData.recordType = "DATA"

@@ -33,7 +33,7 @@ const (
 type Cntlr struct {
 	cfg    cntlrCfg
 	dbH    db.UspDb
-	mtpH   *mtp.MtpHandler
+	mtpH   mtp.MtpHandler
 	cacheH cacheHandler
 	agentH agentHandler
 	cntlrgrpc.UnimplementedGrpcServer
@@ -58,12 +58,10 @@ func (c *Cntlr) Init() error {
 	}
 	log.Println("Db Init ...successful!")
 
-	mtpH, err := mtp.Init()
-	if err != nil {
-		log.Println("Error in mtpInit()")
+	if err := c.mtpH.Init(); err != nil {
+		log.Println("Error in MTP Init")
 		return err
 	}
-	c.mtpH = mtpH
 	log.Println("MTP Init ...successful!")
 
 	// Initialize Cache handler
@@ -87,12 +85,12 @@ func (c *Cntlr) Run() (chan int32, error) {
 	var err error = nil
 
 	log.Println("Starting MTP threads...")
-	mtp.MtpRxThreads(c.mtpH)
+	c.mtpH.MtpRxThreads()
 
 	log.Println("Starting GRPC Server...")
 	go c.GrpcServerThread(c.cfg.grpc.port, exit)
 
-	log.Println("Starting Cntrl MTP Rx Msg Handler thread...")
+	log.Println("Starting Cntlr MTP Rx Msg Handler thread...")
 	go c.MtpRxMessageHandler()
 
 	//go m.agentHandlerThread()
