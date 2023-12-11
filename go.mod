@@ -1,6 +1,6 @@
 module github.com/n4-networks/openusp
 
-go 1.21.1
+go 1.21
 
 require (
 	github.com/abiosoft/ishell v2.0.0+incompatible
