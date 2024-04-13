@@ -63,6 +63,6 @@ OpenUsp-Cli>>
 
 ```
 
-For more details visit https://openusp.io
+For more details visit https://openusp.org
 
 
